@@ -1,0 +1,28 @@
+{
+  "name": "analytics.js-integration-segmentio",
+  "repo": "segment-integrations/analytics.js-integration-segmentio",
+  "description": "The Segmentio analytics.js integration.",
+  "version": "1.0.0",
+  "license": "MIT",
+  "main": "lib/index.js",
+  "dependencies": {
+    "segmentio/ad-params": "0.0.2",
+    "component/clone": "0.1.0",
+    "component/cookie": "1.1.1",
+    "segmentio/extend": "0.0.1",
+    "segmentio/analytics.js-integration": "0.3.x",
+    "yields/store": "1.0.2",
+    "segmentio/protocol": "0.0.2",
+    "yields/send-json": "1.1.1",
+    "segmentio/top-domain": "1.0.0",
+    "segmentio/utm-params": "1.0.2",
+    "gjohnson/uuid": "0.0.1"
+  },
+  "development": {
+    "segmentio/analytics.js": "*",
+    "component/assert": "0.5.0",
+    "segmentio/clear-env": "0.2.x",
+    "segmentio/spy": "0.3.0",
+    "segmentio/analytics.js-integration-tester": "1.4.x"
+  }
+}
