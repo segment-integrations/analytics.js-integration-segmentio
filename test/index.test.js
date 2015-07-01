@@ -1,5 +1,5 @@
 
-var Analytics = require('analytics.js').constructor;
+var Analytics = require('analytics.js-core').constructor;
 var assert = require('component/assert');
 var cookie = require('cookie');
 var integration = require('analytics.js-integration');

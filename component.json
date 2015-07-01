@@ -2,7 +2,7 @@
   "name": "analytics.js-integration-segmentio",
   "repo": "segment-integrations/analytics.js-integration-segmentio",
   "description": "The Segmentio analytics.js integration.",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "license": "MIT",
   "main": "lib/index.js",
   "dependencies": {
@@ -22,7 +22,7 @@
   "development": {
     "component/assert": "0.5.0",
     "component/type": "1.0.0",
-    "segmentio/analytics.js": "*",
+    "segmentio/analytics.js-core": "^2.10.0",
     "segmentio/analytics.js-integration-tester": "1.4.x",
     "segmentio/clear-env": "0.2.x",
     "segmentio/spy": "0.3.0"
