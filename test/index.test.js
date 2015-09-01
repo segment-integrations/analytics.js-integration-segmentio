@@ -405,6 +405,18 @@ describe('Segment.io', function() {
         });
       });
 
+      it('should emit an error when the request doesn\'t succeed', function(done) {
+        var emittedErr;
+        analytics.on('error', function(err) { emittedErr = err; });
+
+        protocol('http:');
+        segment.send('/u', { userId: 'id' }, function(err) {
+          assert(err);
+          assert.strictEqual(emittedErr, err);
+          done();
+        });
+      });
+
       describe('/g', ensure('/g', { groupId: 'gid', userId: 'uid' }));
       describe('/p', ensure('/p', { userId: 'id', name: 'page', properties: {} }));
       describe('/a', ensure('/a', { userId: 'id', from: 'b', to: 'a' }));
