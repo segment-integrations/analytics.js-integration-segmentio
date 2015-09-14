@@ -162,6 +162,16 @@ describe('Segment.io', function() {
         analytics.assert(object.messageId.length === 36);
       });
 
+      it('should properly randomize .messageId', function() {
+        var set = {};
+        var count = 10000;
+        for (var i = 0; i < count; i++) {
+          var id = segment.normalize(object).messageId;
+          set[id] = true;
+        }
+        analytics.assert(Object.keys(set).length === count);
+      });
+
       it('should add .library', function() {
         segment.normalize(object);
         analytics.assert(object.context.library);

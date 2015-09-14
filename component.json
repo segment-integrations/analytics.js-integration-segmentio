@@ -9,6 +9,7 @@
     "component/clone": "0.1.0",
     "component/cookie": "1.1.1",
     "gjohnson/uuid": "0.0.1",
+    "satazor/SparkMD5": "1.0.0",
     "segmentio/ad-params": "0.0.2",
     "segmentio/analytics.js-integration": "^1.0.1",
     "segmentio/extend": "0.0.1",
