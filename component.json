@@ -11,7 +11,7 @@
     "gjohnson/uuid": "0.0.1",
     "satazor/SparkMD5": "1.0.0",
     "segmentio/ad-params": "0.0.2",
-    "segmentio/analytics.js-integration": "^1.0.1",
+    "segmentio/analytics.js-integration": "^1.1.0",
     "segmentio/extend": "0.0.1",
     "segmentio/json": "1.0.0",
     "segmentio/protocol": "0.0.2",
@@ -23,8 +23,8 @@
   "development": {
     "component/assert": "0.5.0",
     "component/type": "1.0.0",
-    "segmentio/analytics.js-core": "^2.10.0",
-    "segmentio/analytics.js-integration-tester": "1.4.x",
+    "segmentio/analytics.js-core": "^2.12.0",
+    "segmentio/analytics.js-integration-tester": "^1.5.0",
     "segmentio/clear-env": "0.2.x",
     "segmentio/spy": "0.3.0"
   }
