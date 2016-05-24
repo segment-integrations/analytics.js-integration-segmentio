@@ -1,3 +1,10 @@
+
+1.0.6 / 2016-05-24
+==================
+
+  * fix this forsaken dependency hell
+  * add traits to context
+
 1.0.5 / 2016-05-07
 ==================
 
