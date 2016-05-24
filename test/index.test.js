@@ -1,6 +1,6 @@
 
 var Analytics = require('analytics.js-core').constructor;
-var assert = require('component/assert');
+var assert = require('segmentio/assert');
 var cookie = require('cookie');
 var integration = require('analytics.js-integration');
 var json = require('segmentio/json@1.0.0');
