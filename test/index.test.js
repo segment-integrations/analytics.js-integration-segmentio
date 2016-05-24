@@ -152,6 +152,30 @@ describe('Segment.io', function() {
         analytics.assert(object.options == null);
       });
 
+      it('should add traits to context', function() {
+        var traits = {
+          show: 'Bobs burger',
+          favoriteCharacter: 'Louise'
+        };
+        analytics.user().traits(traits);
+        segment.normalize(object);
+        analytics.assert(object.context.traits);
+        analytics.assert(object.context.traits.show === 'Bobs burger');
+        analytics.assert(object.context.traits.favoriteCharacter === 'Louise');
+      });
+
+      it('should not rewrite traits if provided', function() {
+        var object = { context: {
+          traits: {
+            race: 'zerg'
+          }
+        }};
+        analytics.user().traits({ race: 'protoss' });
+        segment.normalize(object);
+        analytics.assert(object.context);
+        analytics.assert(object.context.traits.race === 'zerg');
+      });
+
       it('should add .writeKey', function() {
         segment.normalize(object);
         analytics.assert(object.writeKey === segment.options.apiKey);
