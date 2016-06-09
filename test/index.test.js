@@ -48,6 +48,8 @@ describe('Segment.io', function() {
   function resetCookies() {
     store('s:context.referrer', null);
     cookie('s:context.referrer', null, { maxage: -1, path: '/' });
+    store('segment_amp_id', null);
+    cookie('segment_amp_id', null, { maxage: -1, path: '/' });
   }
 
   it('should have the right settings', function() {
@@ -277,6 +279,22 @@ describe('Segment.io', function() {
         analytics.assert(object.context.referrer.id === 'medium');
         analytics.assert(object.context.referrer.type === 'millennial-media');
         Segment.global = window;
+      });
+
+      it('should add .amp.id from store', function() {
+        segment.cookie('segment_amp_id', 'some-amp-id');
+        segment.normalize(object);
+        analytics.assert(object);
+        analytics.assert(object.context);
+        analytics.assert(object.context.amp);
+        analytics.assert(object.context.amp.id === 'some-amp-id');
+      });
+
+      it('should not add .amp if theres no segment_amp_id', function() {
+        segment.normalize(object);
+        analytics.assert(object);
+        analytics.assert(object.context);
+        analytics.assert(!object.context.amp);
       });
     });
   });
