@@ -1,16 +1,24 @@
+'use strict';
 
-var Analytics = require('analytics.js-core').constructor;
-var assert = require('segmentio/assert');
-var cookie = require('cookie');
-var integration = require('analytics.js-integration');
-var json = require('segmentio/json@1.0.0');
-var protocol = require('protocol');
-var sandbox = require('clear-env');
-var spy = require('segmentio/spy');
-var store = require('store');
-var tester = require('analytics.js-integration-tester');
-var type = require('component/type@1.0.0');
+var Analytics = require('@segment/analytics.js-core').constructor;
+var JSON = require('json3');
 var Segment = require('../lib/');
+var assert = require('proclaim');
+var cookie = require('component-cookie');
+var integration = require('@segment/analytics.js-integration');
+var protocol = require('@segment/protocol');
+var sandbox = require('@segment/clear-env');
+var spy = require('@segment/spy');
+var store = require('yields-store');
+var tester = require('@segment/analytics.js-integration-tester');
+var type = require('component-type');
+var sinon = require('sinon');
+
+// FIXME(ndhoule): clear-env's AJAX request clearing interferes with PhantomJS 2
+// Detect Phantom env and use it to disable affected tests. We should use a
+// better/more robust way of intercepting and canceling AJAX requests to avoid
+// this hackery
+var isPhantomJS = (/PhantomJS/).test(window.navigator.userAgent);
 
 describe('Segment.io', function() {
   var segment;
@@ -171,7 +179,7 @@ describe('Segment.io', function() {
           traits: {
             race: 'zerg'
           }
-        }};
+        } };
         analytics.user().traits({ race: 'protoss' });
         segment.normalize(object);
         analytics.assert(object.context);
@@ -190,7 +198,7 @@ describe('Segment.io', function() {
 
       it('should properly randomize .messageId', function() {
         var set = {};
-        var count = 10000;
+        var count = 1000;
         for (var i = 0; i < count; i++) {
           var id = segment.normalize(object).messageId;
           set[id] = true;
@@ -421,47 +429,120 @@ describe('Segment.io', function() {
         analytics.spy(segment, 'session');
       });
 
-      it('should use http: protocol when http:', function(done) {
+      it('should use http: protocol when http:', sinon.test(function() {
+        var xhr = sinon.useFakeXMLHttpRequest();
+        var spy = sinon.spy();
+        xhr.onCreate = spy;
+
         protocol('http:');
-        segment.send('/i', { userId: 'id' }, function(err, res) {
-          if (err) return done(err);
-          assert.equal('http://api.segment.io/v1/i', res.url);
-          done();
-        });
-      });
+        segment.send('/i', { userId: 'id' });
 
-      it('should use https: protocol when https:', function(done) {
+        assert(spy.calledOnce);
+        var req = spy.getCall(0).args[0];
+        assert.strictEqual(req.url, 'http://api.segment.io/v1/i');
+      }));
+
+      it('should use https: protocol when https:', sinon.test(function() {
+        var xhr = sinon.useFakeXMLHttpRequest();
+        var spy = sinon.spy();
+        xhr.onCreate = spy;
+
         protocol('https:');
-        segment.send('/i', { userId: 'id' }, function(err, res) {
-          if (err) return done(err);
-          assert.equal('https://api.segment.io/v1/i', res.url);
-          done();
-        });
-      });
+        segment.send('/i', { userId: 'id' });
 
-      it('should use https: protocol when file:', function(done) {
+        assert(spy.calledOnce);
+        var req = spy.getCall(0).args[0];
+        assert.strictEqual(req.url, 'https://api.segment.io/v1/i');
+      }));
+
+      it('should use https: protocol when https:', sinon.test(function() {
+        var xhr = sinon.useFakeXMLHttpRequest();
+        var spy = sinon.spy();
+        xhr.onCreate = spy;
+
         protocol('file:');
-        segment.send('/i', { userId: 'id' }, function(err, res) {
-          if (err) return done(err);
-          assert.equal('https://api.segment.io/v1/i', res.url);
-          done();
-        });
-      });
+        segment.send('/i', { userId: 'id' });
 
-      it('should use https: protocol when chrome-extension:', function(done) {
+        assert(spy.calledOnce);
+        var req = spy.getCall(0).args[0];
+        assert.strictEqual(req.url, 'https://api.segment.io/v1/i');
+      }));
+
+      it('should use https: protocol when chrome-extension:', sinon.test(function() {
+        var xhr = sinon.useFakeXMLHttpRequest();
+        var spy = sinon.spy();
+        xhr.onCreate = spy;
+
         protocol('chrome-extension:');
-        segment.send('/i', { userId: 'id' }, function(err, res) {
-          if (err) return done(err);
-          assert.equal('https://api.segment.io/v1/i', res.url);
-          done();
+        segment.send('/i', { userId: 'id' });
+
+        assert(spy.calledOnce);
+        var req = spy.getCall(0).args[0];
+        assert.strictEqual(req.url, 'https://api.segment.io/v1/i');
+      }));
+
+      // FIXME(ndhoule): See note at `isPhantomJS` definition
+      (isPhantomJS ? xdescribe : describe)('e2e tests', function() {
+        describe('/g', function() {
+          it('should succeed', function(done) {
+            var data = { groupId: 'gid', userId: 'uid' };
+
+            segment.send('/g', data, function(err, req) {
+              if (err) return done(err);
+              analytics.assert(JSON.parse(req.responseText).success);
+              done();
+            });
+          });
+        });
+
+        describe('/p', function() {
+          it('should succeed', function(done) {
+            var data = { userId: 'id', name: 'page', properties: {} };
+
+            segment.send('/p', data, function(err, req) {
+              if (err) return done(err);
+              analytics.assert(JSON.parse(req.responseText).success);
+              done();
+            });
+          });
+        });
+
+        describe('/a', function() {
+          it('should succeed', function(done) {
+            var data = { userId: 'id', from: 'b', to: 'a' };
+
+            segment.send('/a', data, function(err, req) {
+              if (err) return done(err);
+              analytics.assert(JSON.parse(req.responseText).success);
+              done();
+            });
+          });
+        });
+
+        describe('/t', function() {
+          it('should succeed', function(done) {
+            var data = { userId: 'id', event: 'my-event', properties: {} };
+
+            segment.send('/t', data, function(err, req) {
+              if (err) return done(err);
+              analytics.assert(JSON.parse(req.responseText).success);
+              done();
+            });
+          });
+        });
+
+        describe('/i', function() {
+          it('should succeed', function(done) {
+            var data = { userId: 'id' };
+
+            segment.send('/i', data, function(err, req) {
+              if (err) return done(err);
+              analytics.assert(JSON.parse(req.responseText).success);
+              done();
+            });
+          });
         });
       });
-
-      describe('/g', ensure('/g', { groupId: 'gid', userId: 'uid' }));
-      describe('/p', ensure('/p', { userId: 'id', name: 'page', properties: {} }));
-      describe('/a', ensure('/a', { userId: 'id', from: 'b', to: 'a' }));
-      describe('/t', ensure('/t', { userId: 'id', event: 'my-event', properties: {} }));
-      describe('/i', ensure('/i', { userId: 'id' }));
     });
 
     describe('#cookie', function() {
@@ -497,18 +578,5 @@ describe('Segment.io', function() {
         Segment.global = window;
       });
     });
-
-    // ensure the given endpoint succeeds with fixture.
-    function ensure(endpoint, fixture) {
-      return function() {
-        it('should succeed', function(done) {
-          segment.send(endpoint, fixture, function(err, req) {
-            if (err) return done(err);
-            analytics.assert(json.parse(req.responseText).success);
-            done();
-          });
-        });
-      };
-    }
   });
 });

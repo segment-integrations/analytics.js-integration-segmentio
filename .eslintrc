@@ -1,17 +1,3 @@
 {
-  "extends": "segment/browser",
-
-  "rules": {
-    // FIXME: Refactor and remove this rule
-    "consistent-return": 1,
-    "global-strict": 0,
-    "max-len": 0,
-    "strict": 1
-  },
-
-  "globals": {
-    "exports": true,
-    "module": true,
-    "require": true
-  }
+  "extends": "@segment/eslint-config/browser/legacy"
 }
