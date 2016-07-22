@@ -23,9 +23,7 @@ var isPhantomJS = (/PhantomJS/).test(window.navigator.userAgent);
 describe('Segment.io', function() {
   var segment;
   var analytics;
-  var options = {
-    apiKey: 'oq0vdlg7yi'
-  };
+  var options;
 
   before(function() {
     // Just to make sure that `cookie()`
@@ -35,6 +33,7 @@ describe('Segment.io', function() {
   });
 
   beforeEach(function() {
+    options = { apiKey: 'oq0vdlg7yi' };
     protocol.reset();
     analytics = new Analytics();
     segment = new Segment(options);
@@ -455,6 +454,34 @@ describe('Segment.io', function() {
         assert(spy.calledOnce);
         var req = spy.getCall(0).args[0];
         assert.strictEqual(req.url, 'https://api.segment.io/v1/i');
+      }));
+
+      it('should send to `api.segment.io/v1` by default', sinon.test(function() {
+        var xhr = sinon.useFakeXMLHttpRequest();
+        var spy = sinon.spy();
+        xhr.onCreate = spy;
+
+        protocol('https:');
+        segment.send('/i', { userId: 'id' });
+
+        assert(spy.calledOnce);
+        var req = spy.getCall(0).args[0];
+        assert.strictEqual(req.url, 'https://api.segment.io/v1/i');
+      }));
+
+      it('should send to `options.apiHost` when set', sinon.test(function() {
+        segment.options.apiHost = 'api.example.com';
+
+        var xhr = sinon.useFakeXMLHttpRequest();
+        var spy = sinon.spy();
+        xhr.onCreate = spy;
+
+        protocol('https:');
+        segment.send('/i', { userId: 'id' });
+
+        assert(spy.calledOnce);
+        var req = spy.getCall(0).args[0];
+        assert.strictEqual(req.url, 'https://api.example.com/i');
       }));
 
       // FIXME(ndhoule): See note at `isPhantomJS` definition
