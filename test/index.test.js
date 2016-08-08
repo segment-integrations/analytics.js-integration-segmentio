@@ -284,7 +284,8 @@ describe('Segment.io', function() {
         segment._attachMetadata({ prop1: 'a' });
         segment.normalize(object);
         analytics.assert(object);
-        analytics.assert(object.prop1 === 'a');
+        analytics.assert(object.__metadata__);
+        analytics.assert(object.__metadata__.prop1 === 'a');
       });
 
       it('should add multiple attached metadata', function() {
@@ -292,8 +293,9 @@ describe('Segment.io', function() {
         segment._attachMetadata({ prop2: 'b' });
         segment.normalize(object);
         analytics.assert(object);
-        analytics.assert(object.prop1 === 'a');
-        analytics.assert(object.prop2 === 'b');
+        analytics.assert(object.__metadata__);
+        analytics.assert(object.__metadata__.prop1 === 'a');
+        analytics.assert(object.__metadata__.prop2 === 'b');
       });
     });
   });
