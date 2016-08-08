@@ -279,6 +279,24 @@ describe('Segment.io', function() {
         analytics.assert(object.context);
         analytics.assert(!object.context.amp);
       });
+
+      it('should add attached metadata', function() {
+        segment._attachMetadata({ prop1: 'a' });
+        segment.normalize(object);
+        analytics.assert(object);
+        analytics.assert(object.__metadata__);
+        analytics.assert(object.__metadata__.prop1 === 'a');
+      });
+
+      it('should add multiple attached metadata', function() {
+        segment._attachMetadata({ prop1: 'a' });
+        segment._attachMetadata({ prop2: 'b' });
+        segment.normalize(object);
+        analytics.assert(object);
+        analytics.assert(object.__metadata__);
+        analytics.assert(object.__metadata__.prop1 === 'a');
+        analytics.assert(object.__metadata__.prop2 === 'b');
+      });
     });
   });
 
