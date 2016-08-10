@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/segment-integrations/analytics.js-integration-segmentio#readme",
   "dependencies": {
+    "@ndhoule/each": "^2.0.1",
     "@ndhoule/extend": "^2.0.0",
     "@segment/ad-params": "^1.0.0",
     "@segment/analytics.js-integration": "^2.1.0",
@@ -34,6 +35,7 @@
     "component-clone": "^0.2.2",
     "component-cookie": "^1.1.2",
     "component-type": "^1.2.1",
+    "each": "^0.6.1",
     "json3": "^3.3.2",
     "spark-md5": "^2.0.2",
     "uuid": "^2.0.2",

@@ -5,6 +5,7 @@ var JSON = require('json3');
 var Segment = require('../lib/');
 var assert = require('proclaim');
 var cookie = require('component-cookie');
+var extend = require('@ndhoule/extend');
 var integration = require('@segment/analytics.js-integration');
 var protocol = require('@segment/protocol');
 var sandbox = require('@segment/clear-env');
@@ -278,6 +279,24 @@ describe('Segment.io', function() {
         analytics.assert(object);
         analytics.assert(object.context);
         analytics.assert(!object.context.amp);
+      });
+
+      it('should add a list of enabled integrations when `addEnabledMetadata` is set', function() {
+        var opts = extend({ addEnabledMetadata: true }, options);
+        var Analytics = analytics.constructor;
+        var ajs = new Analytics();
+        ajs.use(Segment);
+        ajs.use(integration('other'));
+        ajs.initialize({ 'Segment.io': opts, other: {} });
+
+        segment = ajs._integrations['Segment.io'];
+        segment.normalize(object);
+        assert(object);
+        assert(object._metadata);
+        assert.deepEqual(object._metadata.enabled, {
+          'Segment.io': true,
+          other: true
+        });
       });
     });
   });
