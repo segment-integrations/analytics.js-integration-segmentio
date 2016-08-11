@@ -285,11 +285,12 @@ describe('Segment.io', function() {
         var opts = extend({ addEnabledMetadata: true }, options);
         var Analytics = analytics.constructor;
         var ajs = new Analytics();
+        var segment = new Segment(opts);
         ajs.use(Segment);
         ajs.use(integration('other'));
-        ajs.initialize({ 'Segment.io': opts, other: {} });
+        ajs.add(segment);
+        ajs.initialize({ other: {} });
 
-        segment = ajs._integrations['Segment.io'];
         segment.normalize(object);
         assert(object);
         assert(object._metadata);
@@ -297,6 +298,20 @@ describe('Segment.io', function() {
           'Segment.io': true,
           other: true
         });
+      });
+
+      it('should not add a list of enabled integrations when `addEnabledMetadata` is unset', function() {
+        var Analytics = analytics.constructor;
+        var ajs = new Analytics();
+        var segment = new Segment(options);
+        ajs.use(Segment);
+        ajs.use(integration('other'));
+        ajs.add(segment);
+        ajs.initialize({ other: {} });
+
+        segment.normalize(object);
+        assert(object);
+        assert(!object._metadata);
       });
     });
   });
