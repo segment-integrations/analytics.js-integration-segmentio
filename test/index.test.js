@@ -518,6 +518,25 @@ describe('Segment.io', function() {
         assert.strictEqual(req.url, 'https://api.example.com/i');
       }));
 
+      it('should send a normalized payload', sinon.test(function() {
+        var xhr = sinon.useFakeXMLHttpRequest();
+        var spy = sinon.spy();
+        xhr.onCreate = spy;
+
+        var payload = {
+          key1: 'value1',
+          key2: 'value2'
+        };
+
+        segment.normalize = function() { return payload; };
+
+        segment.send('/i', {});
+
+        assert(spy.calledOnce);
+        var req = spy.getCall(0).args[0];
+        assert.strictEqual(req.requestBody, JSON.stringify(payload));
+      }));
+
       // FIXME(ndhoule): See note at `isPhantomJS` definition
       (isPhantomJS ? xdescribe : describe)('e2e tests', function() {
         describe('/g', function() {
