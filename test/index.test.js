@@ -281,8 +281,8 @@ describe('Segment.io', function() {
         analytics.assert(!object.context.amp);
       });
 
-      it('should add a list of enabled integrations when `addEnabledMetadata` is set', function() {
-        var opts = extend({ addEnabledMetadata: true }, options);
+      it('should add a list of bundled integrations when `addBundledMetadata` is set', function() {
+        var opts = extend({ addBundledMetadata: true }, options);
         var Analytics = analytics.constructor;
         var ajs = new Analytics();
         var segment = new Segment(opts);
@@ -294,13 +294,13 @@ describe('Segment.io', function() {
         segment.normalize(object);
         assert(object);
         assert(object._metadata);
-        assert.deepEqual(object._metadata.enabled, {
+        assert.deepEqual(object._metadata.bundled, {
           'Segment.io': true,
           other: true
         });
       });
 
-      it('should not add a list of enabled integrations when `addEnabledMetadata` is unset', function() {
+      it('should not add a list of bundled integrations when `addBundledMetadata` is unset', function() {
         var Analytics = analytics.constructor;
         var ajs = new Analytics();
         var segment = new Segment(options);
