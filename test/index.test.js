@@ -5,6 +5,7 @@ var JSON = require('json3');
 var Segment = require('../lib/');
 var assert = require('proclaim');
 var cookie = require('component-cookie');
+var extend = require('@ndhoule/extend');
 var integration = require('@segment/analytics.js-integration');
 var protocol = require('@segment/protocol');
 var sandbox = require('@segment/clear-env');
@@ -279,6 +280,39 @@ describe('Segment.io', function() {
         analytics.assert(object.context);
         analytics.assert(!object.context.amp);
       });
+
+      it('should add a list of bundled integrations when `addBundledMetadata` is set', function() {
+        var opts = extend({ addBundledMetadata: true }, options);
+        var Analytics = analytics.constructor;
+        var ajs = new Analytics();
+        var segment = new Segment(opts);
+        ajs.use(Segment);
+        ajs.use(integration('other'));
+        ajs.add(segment);
+        ajs.initialize({ other: {} });
+
+        segment.normalize(object);
+        assert(object);
+        assert(object._metadata);
+        assert.deepEqual(object._metadata.bundled, {
+          'Segment.io': true,
+          other: true
+        });
+      });
+
+      it('should not add a list of bundled integrations when `addBundledMetadata` is unset', function() {
+        var Analytics = analytics.constructor;
+        var ajs = new Analytics();
+        var segment = new Segment(options);
+        ajs.use(Segment);
+        ajs.use(integration('other'));
+        ajs.add(segment);
+        ajs.initialize({ other: {} });
+
+        segment.normalize(object);
+        assert(object);
+        assert(!object._metadata);
+      });
     });
   });
 
@@ -482,6 +516,25 @@ describe('Segment.io', function() {
         assert(spy.calledOnce);
         var req = spy.getCall(0).args[0];
         assert.strictEqual(req.url, 'https://api.example.com/i');
+      }));
+
+      it('should send a normalized payload', sinon.test(function() {
+        var xhr = sinon.useFakeXMLHttpRequest();
+        var spy = sinon.spy();
+        xhr.onCreate = spy;
+
+        var payload = {
+          key1: 'value1',
+          key2: 'value2'
+        };
+
+        segment.normalize = function() { return payload; };
+
+        segment.send('/i', {});
+
+        assert(spy.calledOnce);
+        var req = spy.getCall(0).args[0];
+        assert.strictEqual(req.requestBody, JSON.stringify(payload));
       }));
 
       // FIXME(ndhoule): See note at `isPhantomJS` definition
