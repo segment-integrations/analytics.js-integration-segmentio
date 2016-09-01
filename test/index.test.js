@@ -5,7 +5,6 @@ var JSON = require('json3');
 var Segment = require('../lib/');
 var assert = require('proclaim');
 var cookie = require('component-cookie');
-var extend = require('@ndhoule/extend');
 var integration = require('@segment/analytics.js-integration');
 var protocol = require('@segment/protocol');
 var sandbox = require('@segment/clear-env');
@@ -281,37 +280,47 @@ describe('Segment.io', function() {
         analytics.assert(!object.context.amp);
       });
 
-      it('should add a list of bundled integrations when `addBundledMetadata` is set', function() {
-        var opts = extend({ addBundledMetadata: true }, options);
-        var Analytics = analytics.constructor;
-        var ajs = new Analytics();
-        var segment = new Segment(opts);
-        ajs.use(Segment);
-        ajs.use(integration('other'));
-        ajs.add(segment);
-        ajs.initialize({ other: {} });
+      describe('unbundling', function() {
+        var segment;
 
-        segment.normalize(object);
-        assert(object);
-        assert(object._metadata);
-        assert.deepEqual(object._metadata.bundled, {
-          'Segment.io': true,
-          other: true
+        beforeEach(function() {
+          var Analytics = analytics.constructor;
+          var ajs = new Analytics();
+          segment = new Segment(options);
+          ajs.use(Segment);
+          ajs.use(integration('other'));
+          ajs.add(segment);
+          ajs.initialize({ other: {} });
         });
-      });
 
-      it('should not add a list of bundled integrations when `addBundledMetadata` is unset', function() {
-        var Analytics = analytics.constructor;
-        var ajs = new Analytics();
-        var segment = new Segment(options);
-        ajs.use(Segment);
-        ajs.use(integration('other'));
-        ajs.add(segment);
-        ajs.initialize({ other: {} });
+        it('should add a list of bundled integrations when `addBundledMetadata` is set', function() {
+          segment.options.addBundledMetadata = true;
+          segment.normalize(object);
 
-        segment.normalize(object);
-        assert(object);
-        assert(!object._metadata);
+          assert(object);
+          assert(object._metadata);
+          assert.deepEqual(object._metadata.bundled, [
+            'Segment.io',
+            'other'
+          ]);
+        });
+
+        it('should add a list of unbundled integrations when `addBundledMetadata` and `unbundledIntegrations` are set', function() {
+          segment.options.addBundledMetadata = true;
+          segment.options.unbundledIntegrations = [ 'other2' ];
+          segment.normalize(object);
+
+          assert(object);
+          assert(object._metadata);
+          assert.deepEqual(object._metadata.unbundled, [ 'other2' ]);
+        });
+
+        it('should not add _metadata when `addBundledMetadata` is unset', function() {
+          segment.normalize(object);
+
+          assert(object);
+          assert(!object._metadata);
+        });
       });
     });
   });
