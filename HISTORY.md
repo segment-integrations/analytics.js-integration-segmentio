@@ -1,3 +1,10 @@
+
+3.2.0 / 2016-09-01
+==================
+
+  * Add unbundled metadata (#17)
+  * Add bundled integrations metadata to every request (#16)
+
 3.1.1 / 2016-07-22
 ==================
 
