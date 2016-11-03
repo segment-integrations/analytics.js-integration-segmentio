@@ -447,7 +447,7 @@ describe('Segment.io', function() {
         analytics.spy(segment, 'session');
       });
 
-      it('should use http: protocol when http:', sinon.test(function() {
+      it('should use https: protocol when http:', sinon.test(function() {
         var xhr = sinon.useFakeXMLHttpRequest();
         var spy = sinon.spy();
         xhr.onCreate = spy;
@@ -457,7 +457,7 @@ describe('Segment.io', function() {
 
         assert(spy.calledOnce);
         var req = spy.getCall(0).args[0];
-        assert.strictEqual(req.url, 'http://api.segment.io/v1/i');
+        assert.strictEqual(req.url, 'https://api.segment.io/v1/i');
       }));
 
       it('should use https: protocol when https:', sinon.test(function() {
