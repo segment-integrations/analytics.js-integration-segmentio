@@ -8,7 +8,6 @@ var cookie = require('component-cookie');
 var integration = require('@segment/analytics.js-integration');
 var protocol = require('@segment/protocol');
 var sandbox = require('@segment/clear-env');
-var spy = require('@segment/spy');
 var store = require('yields-store');
 var tester = require('@segment/analytics.js-integration-tester');
 var type = require('component-type');
@@ -71,9 +70,9 @@ describe('Segment.io', function() {
     ajs.initialize({ 'Segment.io': options });
     ajs.ready(function() {
       var segment = ajs._integrations['Segment.io'];
-      segment.ontrack = spy();
+      segment.ontrack = sinon.spy();
       ajs.track('event', {}, { All: false });
-      assert(segment.ontrack.called);
+      assert(segment.ontrack.calledOnce);
       done();
     });
   });
@@ -545,6 +544,102 @@ describe('Segment.io', function() {
         var req = spy.getCall(0).args[0];
         assert.strictEqual(req.requestBody, JSON.stringify(payload));
       }));
+
+      describe('beacon', function() {
+        beforeEach(function() {
+          if (!navigator.sendBeacon) {
+            navigator.sendBeacon = function() { return true; };
+          }
+        });
+
+        it('should default to ajax', sinon.test(function() {
+          var beacon = this.stub(navigator, 'sendBeacon').returns(true);
+
+          var ajax = this.spy();
+          var xhr = sinon.useFakeXMLHttpRequest();
+          xhr.onCreate = ajax;
+
+          segment.send('/i', { userId: 'id' });
+
+          assert(!beacon.called);
+          assert(ajax.calledOnce);
+        }));
+
+        it('should call beacon', sinon.test(function() {
+          var beacon = this.stub(navigator, 'sendBeacon').returns(true);
+
+          segment.options.beacon = true;
+
+          segment.send('/i', { userId: 'id' });
+
+          assert(beacon.calledOnce);
+          var args = beacon.getCall(0).args;
+          assert.strictEqual(args[0], 'https://api.segment.io/v1/i');
+          assert(typeof args[1] === 'string');
+        }));
+
+        it('should not fallback to ajax on beacon success', sinon.test(function() {
+          var beacon = this.stub(navigator, 'sendBeacon').returns(true);
+
+          var ajax = this.spy();
+          var xhr = sinon.useFakeXMLHttpRequest();
+          xhr.onCreate = ajax;
+
+          segment.options.beacon = true;
+
+          segment.send('/i', { userId: 'id' });
+
+          assert(beacon.calledOnce);
+          assert(!ajax.called);
+        }));
+
+        it('should fallback to ajax on beacon failure', sinon.test(function() {
+          var beacon = this.stub(navigator, 'sendBeacon').returns(false);
+
+          var ajax = this.spy();
+          var xhr = sinon.useFakeXMLHttpRequest();
+          xhr.onCreate = ajax;
+
+          segment.options.beacon = true;
+
+          segment.send('/i', { userId: 'id' });
+
+          assert(beacon.calledOnce);
+          assert(ajax.calledOnce);
+        }));
+
+        it('should fallback to ajax if beacon is not supported', sinon.test(function() {
+          navigator.sendBeacon = null;
+
+          var ajax = this.spy();
+          var xhr = sinon.useFakeXMLHttpRequest();
+          xhr.onCreate = ajax;
+
+          segment.options.beacon = true;
+
+          segment.send('/i', { userId: 'id' });
+
+          assert(ajax.calledOnce);
+        }));
+
+        it('should execute callback with no arguments', sinon.test(function(done) {
+          var beacon = this.stub(navigator, 'sendBeacon').returns(true);
+
+          var ajax = this.spy();
+          var xhr = sinon.useFakeXMLHttpRequest();
+          xhr.onCreate = ajax;
+
+          segment.options.beacon = true;
+
+          segment.send('/i', { userId: 'id' }, function(error, res) {
+            assert(!error);
+            assert(!res);
+            assert(beacon.calledOnce);
+            assert(!ajax.called);
+            done();
+          });
+        }));
+      });
 
       // FIXME(ndhoule): See note at `isPhantomJS` definition
       (isPhantomJS ? xdescribe : describe)('e2e tests', function() {
