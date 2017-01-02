@@ -1,8 +1,13 @@
 
+3.2.2 / 2017-01-02
+==================
+
+  * Add beacon support (#19)
+
 3.2.1 / 2016-11-03
 ==================
 
-  * Always send requests over HTTPS 
+  * Always send requests over HTTPS
 
 3.2.0 / 2016-09-01
 ==================
