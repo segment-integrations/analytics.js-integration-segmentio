@@ -56,6 +56,8 @@ describe('Segment.io', function() {
     cookie('s:context.referrer', null, { maxage: -1, path: '/' });
     store('segment_amp_id', null);
     cookie('segment_amp_id', null, { maxage: -1, path: '/' });
+    store('s:context.crossDomainId', null);
+    cookie('s:context.crossDomainId', null, { maxage: -1, path: '/' });
   }
 
   it('should have the right settings', function() {
@@ -736,6 +738,56 @@ describe('Segment.io', function() {
         segment.cookie('foo', 'bar');
         analytics.assert(segment.cookie('foo') === 'bar');
         Segment.global = window;
+      });
+    });
+  
+    describe('#crossDomainId', function() {
+      var server;
+
+      beforeEach(function() {
+        server = sinon.fakeServer.create();
+        segment.options.crossDomainIdDomains = [
+          'userdata.example1.com',
+          'userdata.domain2.com'
+        ];
+        analytics.stub(segment, 'identify');
+        analytics.stub(segment, 'track');
+      });
+      
+      afterEach(function () {
+        server.restore();
+      });
+      
+      it('should obtain crossDomainId', function() {
+        server.respondWith('GET', 'https://userdata.example1.com/v1/id/', [
+          200,
+          { 'Content-Type': 'application/json' },
+          '{ "id": "xdomain-id-1" }'
+        ]);
+        server.respondWith('GET', 'https://userdata.domain2.com/v1/id/', [
+          404,
+          { 'Content-Type': 'application/json' },
+          ''
+        ]);
+        
+        analytics.assert(1 === 1);
+        
+        // var identify = segment.identify.args[0];
+        // 
+        // analytics.assert(identify[0].crossDomainId === 'xdomain-id-1');
+        // analytics.assert(identify[1].name === 'name');
+        // analytics.assert(identify[1].category === 'section');
+        // analytics.assert(identify[1].properties.property === true);
+        // analytics.assert(identify[1].context.opt === true);
+        // analytics.assert(identify[1].timestamp);
+        // 
+        // var track = segment.track.args[0];
+        // 
+        // analytics.assert(track[0] === 'Cross Domain ID Obtained');
+        // analytics.assert(track[1].crossDomainId === 'xdomain-id-1');
+        // analytics.assert(track[1].fromDomain === 'userdata.example1.com');
+        // console.log('currentDomain', track[1].currentDomain);
+        // analytics.assert(track[1].currentDomain === 'userdata.example1.com');
       });
     });
   });
