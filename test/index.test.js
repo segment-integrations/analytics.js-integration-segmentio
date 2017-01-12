@@ -754,7 +754,7 @@ describe('Segment.io', function() {
         analytics.stub(segment, 'ontrack');
       });
       
-      afterEach(function () {
+      afterEach(function() {
         server.restore();
       });
       
