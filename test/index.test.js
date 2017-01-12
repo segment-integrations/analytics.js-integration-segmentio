@@ -746,7 +746,7 @@ describe('Segment.io', function() {
 
       beforeEach(function() {
         server = sinon.fakeServer.create();
-        segment.options.crossDomainIdDomains = [
+        segment.options.crossDomainIdServers = [
           'userdata.example1.com',
           'userdata.domain2.com'
         ];
