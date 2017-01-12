@@ -56,8 +56,8 @@ describe('Segment.io', function() {
     cookie('s:context.referrer', null, { maxage: -1, path: '/' });
     store('segment_amp_id', null);
     cookie('segment_amp_id', null, { maxage: -1, path: '/' });
-    store('s:context.crossDomainId', null);
-    cookie('s:context.crossDomainId', null, { maxage: -1, path: '/' });
+    store('segment_cross_domain_id', null);
+    cookie('segment_cross_domain_id', null, { maxage: -1, path: '/' });
   }
 
   it('should have the right settings', function() {
