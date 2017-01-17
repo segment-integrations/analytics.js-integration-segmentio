@@ -752,7 +752,7 @@ describe('Segment.io', function() {
         server = sinon.fakeServer.create();
         segment.options.crossDomainIdServers = [
           'userdata.example1.com',
-          'userdata.domain2.com'
+          'xid.domain2.com'
         ];
         analytics.stub(segment, 'onidentify');
       });
@@ -766,29 +766,18 @@ describe('Segment.io', function() {
         segment.retrieveCrossDomainId(function(err, response) {
           res = response;
         });
-        
-        // server.respondWith('GET', 'https://userdata.example1.com/v1/id/', [
-        //   200,
-        //   { 'Content-Type': 'application/json' },
-        //   '{ "id": "xdomain-id-1" }'
-        // ]);
-        // server.respondWith('GET', 'https://userdata.domain2.com/v1/id/', [
-        //   404,
-        //   { 'Content-Type': 'application/json' },
-        //   ''
-        // ]);
-        
-        // TODO: Make this more deterministic
-        server.requests[0].respond(200,
+        server.respondWith('GET', 'https://xid.domain2.com/v1/id/' + segment.options.apiKey, [
+          200,
           { 'Content-Type': 'application/json' },
           '{ "id": "xdomain-id-1" }'
-        );
+        ]);
+        server.respond();
         
         var identify = segment.onidentify.args[0];
         analytics.assert(identify[0].traits().crossDomainId === 'xdomain-id-1');
         
         analytics.assert(res.crossDomainId === 'xdomain-id-1');
-        analytics.assert(res.fromDomain === 'userdata.example1.com');
+        analytics.assert(res.fromDomain === 'xid.domain2.com');
       });
       
       it('should generate crossDomainId', function() {
@@ -797,9 +786,17 @@ describe('Segment.io', function() {
           res = response;
         });
         
-        // TODO: Make this more deterministic
-        server.requests[0].respond(200, { 'Content-Type': 'application/json' }, '{"id": null}');
-        server.requests[1].respond(200, { 'Content-Type': 'application/json' }, '{"id": null}');
+        server.respondWith('GET', 'https://xid.domain2.com/v1/id/' + segment.options.apiKey, [
+          200,
+          { 'Content-Type': 'application/json' },
+          '{ "id": null }'
+        ]);
+        server.respondWith('GET', 'https://userdata.example1.com/v1/id/' + segment.options.apiKey, [
+          200,
+          { 'Content-Type': 'application/json' },
+          '{ "id": null }'
+        ]);
+        server.respond();
         
         var identify = segment.onidentify.args[0];
         var crossDomainId = identify[0].traits().crossDomainId;
