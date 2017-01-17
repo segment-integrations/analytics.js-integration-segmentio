@@ -58,6 +58,10 @@ describe('Segment.io', function() {
     cookie('segment_amp_id', null, { maxage: -1, path: '/' });
     store('segment_cross_domain_id', null);
     cookie('segment_cross_domain_id', null, { maxage: -1, path: '/' });
+    store('segment_cross_domain_id_from_domain', null);
+    cookie('segment_cross_domain_id_from_domain', null, { maxage: -1, path: '/' });
+    store('segment_cross_domain_id_timestamp', null);
+    cookie('segment_cross_domain_id_timestamp', null, { maxage: -1, path: '/' });
   }
 
   it('should have the right settings', function() {
@@ -751,7 +755,6 @@ describe('Segment.io', function() {
           'userdata.domain2.com'
         ];
         analytics.stub(segment, 'onidentify');
-        analytics.stub(segment, 'ontrack');
       });
       
       afterEach(function() {
@@ -759,7 +762,10 @@ describe('Segment.io', function() {
       });
       
       it('should obtain crossDomainId', function() {
-        segment.retrieveCrossDomainId();
+        var res = null;
+        segment.retrieveCrossDomainId(function(err, response) {
+          res = response;
+        });
         
         // server.respondWith('GET', 'https://userdata.example1.com/v1/id/', [
         //   200,
@@ -781,31 +787,26 @@ describe('Segment.io', function() {
         var identify = segment.onidentify.args[0];
         analytics.assert(identify[0].traits().crossDomainId === 'xdomain-id-1');
         
-        var track = segment.ontrack.args[0];
-        var properties = track[0].properties();
-        analytics.assert(track[0].event() === 'Cross Domain ID Obtained');
-        analytics.assert(properties.crossDomainId === 'xdomain-id-1');
-        analytics.assert(properties.fromDomain === 'userdata.domain2.com');
-        analytics.assert(properties.currentDomain === 'localhost');
+        analytics.assert(res.crossDomainId === 'xdomain-id-1');
+        analytics.assert(res.fromDomain === 'userdata.example1.com');
       });
       
       it('should generate crossDomainId', function() {
-        segment.retrieveCrossDomainId();
+        var res = null;
+        segment.retrieveCrossDomainId(function(err, response) {
+          res = response;
+        });
         
         // TODO: Make this more deterministic
-        server.requests[0].respond(404, { 'Content-Type': 'application/json' }, '');
-        server.requests[1].respond(404, { 'Content-Type': 'application/json' }, '');
+        server.requests[0].respond(200, { 'Content-Type': 'application/json' }, '{"id": null}');
+        server.requests[1].respond(200, { 'Content-Type': 'application/json' }, '{"id": null}');
         
         var identify = segment.onidentify.args[0];
         var crossDomainId = identify[0].traits().crossDomainId;
         analytics.assert(crossDomainId);
         
-        var track = segment.ontrack.args[0];
-        var properties = track[0].properties();
-        analytics.assert(track[0].event() === 'Cross Domain ID Generated');
-        analytics.assert(properties.crossDomainId === crossDomainId);
-        analytics.assert(properties.fromDomain == null);
-        analytics.assert(properties.currentDomain === 'localhost');
+        analytics.assert(res.crossDomainId === crossDomainId);
+        analytics.assert(res.fromDomain === 'localhost');
       });
     });
   });
