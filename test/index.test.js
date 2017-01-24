@@ -744,7 +744,7 @@ describe('Segment.io', function() {
         Segment.global = window;
       });
     });
-  
+
     describe('#crossDomainId', function() {
       var server;
 
@@ -757,43 +757,43 @@ describe('Segment.io', function() {
         ];
         analytics.stub(segment, 'onidentify');
       });
-      
+
       afterEach(function() {
         server.restore();
       });
-      
+
       it('should not crash with invalid config', function() {
         segment.options.crossDomainIdServers = undefined;
-        
+
         var res = null;
         var err = null;
         segment.retrieveCrossDomainId(function(error, response) {
           res = response;
           err = error;
         });
-        
+
         analytics.assert(!res);
         analytics.assert(err === 'crossDomainId not enabled');
       });
-      
+
       it('should generate xid locally if there is only one (current hostname) server', function() {
         segment.options.crossDomainIdServers = [
           'localhost'
         ];
-        
+
         var res = null;
         segment.retrieveCrossDomainId(function(err, response) {
           res = response;
         });
-        
+
         var identify = segment.onidentify.args[0];
         var crossDomainId = identify[0].traits().crossDomainId;
         analytics.assert(crossDomainId);
-        
+
         analytics.assert(res.crossDomainId === crossDomainId);
         analytics.assert(res.fromDomain === 'localhost');
       });
-      
+
       it('should obtain crossDomainId', function() {
         var res = null;
         segment.retrieveCrossDomainId(function(err, response) {
@@ -805,20 +805,20 @@ describe('Segment.io', function() {
           '{ "id": "xdomain-id-1" }'
         ]);
         server.respond();
-        
+
         var identify = segment.onidentify.args[0];
         analytics.assert(identify[0].traits().crossDomainId === 'xdomain-id-1');
-        
+
         analytics.assert(res.crossDomainId === 'xdomain-id-1');
         analytics.assert(res.fromDomain === 'xid.domain2.com');
       });
-      
+
       it('should generate crossDomainId if no server has it', function() {
         var res = null;
         segment.retrieveCrossDomainId(function(err, response) {
           res = response;
         });
-        
+
         server.respondWith('GET', 'https://xid.domain2.com/v1/id/' + segment.options.apiKey, [
           200,
           { 'Content-Type': 'application/json' },
@@ -830,15 +830,15 @@ describe('Segment.io', function() {
           '{ "id": null }'
         ]);
         server.respond();
-        
+
         var identify = segment.onidentify.args[0];
         var crossDomainId = identify[0].traits().crossDomainId;
         analytics.assert(crossDomainId);
-        
+
         analytics.assert(res.crossDomainId === crossDomainId);
         analytics.assert(res.fromDomain === 'localhost');
       });
-      
+
       it('should bail if all servers error', function() {
         var err = null;
         var res = null;
@@ -846,7 +846,7 @@ describe('Segment.io', function() {
           err = error;
           res = response;
         });
-        
+
         server.respondWith('GET', 'https://xid.domain2.com/v1/id/' + segment.options.apiKey, [
           500,
           { 'Content-Type': 'application/json' },
@@ -858,13 +858,13 @@ describe('Segment.io', function() {
           ''
         ]);
         server.respond();
-        
+
         var identify = segment.onidentify.args[0];
         analytics.assert(!identify);
         analytics.assert(!res);
         analytics.assert(err === 'Internal Server Error');
       });
-      
+
       it('should bail if some servers fail and others have no xid', function() {
         var err = null;
         var res = null;
@@ -872,7 +872,7 @@ describe('Segment.io', function() {
           err = error;
           res = response;
         });
-        
+
         server.respondWith('GET', 'https://xid.domain2.com/v1/id/' + segment.options.apiKey, [
           400,
           { 'Content-Type': 'application/json' },
@@ -884,13 +884,13 @@ describe('Segment.io', function() {
           '{ "id": null }'
         ]);
         server.respond();
-        
+
         var identify = segment.onidentify.args[0];
         analytics.assert(!identify);
         analytics.assert(!res);
         analytics.assert(err === 'Bad Request');
       });
-      
+
       it('should succeed even if one server fails', function() {
         var err = null;
         var res = null;
@@ -898,7 +898,7 @@ describe('Segment.io', function() {
           err = error;
           res = response;
         });
-        
+
         server.respondWith('GET', 'https://xid.domain2.com/v1/id/' + segment.options.apiKey, [
           500,
           { 'Content-Type': 'application/json' },
@@ -910,14 +910,51 @@ describe('Segment.io', function() {
           '{ "id": "xidxid" }'
         ]);
         server.respond();
-        
+
         var identify = segment.onidentify.args[0];
         analytics.assert(identify[0].traits().crossDomainId === 'xidxid');
-        
+
         analytics.assert(res.crossDomainId === 'xidxid');
         analytics.assert(res.fromDomain === 'userdata.example1.com');
         analytics.assert(!err);
       });
+    });
+  });
+
+  describe('when retryQueue is enabled', function() {
+    beforeEach(function(done) {
+      if (window.localStorage) {
+        window.localStorage.clear();
+      }
+      segment.options.retryQueue = true;
+      analytics.once('ready', done);
+      analytics.initialize();
+    });
+
+    afterEach(function() {
+      segment._lsqueue.stop();
+    });
+
+    it('#send should add to the retry queue', function() {
+      analytics.stub(segment._lsqueue, 'addItem');
+
+      segment.send('/i', { userId: '1' });
+      assert(segment._lsqueue.addItem.calledOnce);
+    });
+
+    it('should send the request', function() {
+      var xhr = sinon.useFakeXMLHttpRequest();
+      var spy = sinon.spy();
+      xhr.onCreate = spy;
+
+      segment.send('/i', { userId: '1' });
+
+      assert(spy.calledOnce);
+
+      var req = spy.getCall(0).args[0];
+
+      var body = JSON.parse(req.requestBody);
+      assert.equal(body.userId, '1');
     });
   });
 });
