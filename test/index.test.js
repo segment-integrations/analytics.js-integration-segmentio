@@ -56,12 +56,12 @@ describe('Segment.io', function() {
     cookie('s:context.referrer', null, { maxage: -1, path: '/' });
     store('segment_amp_id', null);
     cookie('segment_amp_id', null, { maxage: -1, path: '/' });
-    store('segment_cross_domain_id', null);
-    cookie('segment_cross_domain_id', null, { maxage: -1, path: '/' });
-    store('segment_cross_domain_id_from_domain', null);
-    cookie('segment_cross_domain_id_from_domain', null, { maxage: -1, path: '/' });
-    store('segment_cross_domain_id_timestamp', null);
-    cookie('segment_cross_domain_id_timestamp', null, { maxage: -1, path: '/' });
+    store('seg_xid', null);
+    cookie('seg_xid', null, { maxage: -1, path: '/' });
+    store('seg_xid_fd', null);
+    cookie('seg_xid_fd', null, { maxage: -1, path: '/' });
+    store('seg_xid_ts', null);
+    cookie('seg_xid_ts', null, { maxage: -1, path: '/' });
   }
 
   it('should have the right settings', function() {
