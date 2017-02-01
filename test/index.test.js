@@ -768,7 +768,7 @@ describe('Segment.io', function() {
         
         analytics.assert(segment.cookie('segment_cross_domain_id') == null);
         analytics.assert(segment.cookie('seg_xid') === 'xid-test-1');
-      })
+      });
       
       it('should not crash with invalid config', function() {
         segment.options.crossDomainIdServers = undefined;
