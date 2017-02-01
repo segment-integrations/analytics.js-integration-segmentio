@@ -761,7 +761,15 @@ describe('Segment.io', function() {
       afterEach(function() {
         server.restore();
       });
-
+      
+      it('should migrate cookies from old to new name', function() {
+        segment.cookie('segment_cross_domain_id', 'xid-test-1');
+        segment.initialize();
+        
+        analytics.assert(segment.cookie('segment_cross_domain_id') == null);
+        analytics.assert(segment.cookie('seg_xid') === 'xid-test-1');
+      })
+      
       it('should not crash with invalid config', function() {
         segment.options.crossDomainIdServers = undefined;
 
