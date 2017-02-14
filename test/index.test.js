@@ -13,12 +13,6 @@ var tester = require('@segment/analytics.js-integration-tester');
 var type = require('component-type');
 var sinon = require('sinon');
 
-// FIXME(ndhoule): clear-env's AJAX request clearing interferes with PhantomJS 2
-// Detect Phantom env and use it to disable affected tests. We should use a
-// better/more robust way of intercepting and canceling AJAX requests to avoid
-// this hackery
-var isPhantomJS = (/PhantomJS/).test(window.navigator.userAgent);
-
 describe('Segment.io', function() {
   var segment;
   var analytics;
@@ -339,12 +333,12 @@ describe('Segment.io', function() {
 
     describe('#page', function() {
       beforeEach(function() {
-        analytics.stub(segment, 'send');
+        analytics.stub(segment, 'enqueue');
       });
 
-      it('should send section, name and properties', function() {
+      it('should enqueue section, name and properties', function() {
         analytics.page('section', 'name', { property: true }, { opt: true });
-        var args = segment.send.args[0];
+        var args = segment.enqueue.args[0];
         analytics.assert(args[0] === '/p');
         analytics.assert(args[1].name === 'name');
         analytics.assert(args[1].category === 'section');
@@ -356,12 +350,12 @@ describe('Segment.io', function() {
 
     describe('#identify', function() {
       beforeEach(function() {
-        analytics.stub(segment, 'send');
+        analytics.stub(segment, 'enqueue');
       });
 
-      it('should send an id and traits', function() {
+      it('should enqueue an id and traits', function() {
         analytics.identify('id', { trait: true }, { opt: true });
-        var args = segment.send.args[0];
+        var args = segment.enqueue.args[0];
         analytics.assert(args[0] === '/i');
         analytics.assert(args[1].userId === 'id');
         analytics.assert(args[1].traits.trait === true);
@@ -372,12 +366,12 @@ describe('Segment.io', function() {
 
     describe('#track', function() {
       beforeEach(function() {
-        analytics.stub(segment, 'send');
+        analytics.stub(segment, 'enqueue');
       });
 
-      it('should send an event and properties', function() {
+      it('should enqueue an event and properties', function() {
         analytics.track('event', { prop: true }, { opt: true });
-        var args = segment.send.args[0];
+        var args = segment.enqueue.args[0];
         analytics.assert(args[0] === '/t');
         analytics.assert(args[1].event === 'event');
         analytics.assert(args[1].context.opt === true);
@@ -389,12 +383,12 @@ describe('Segment.io', function() {
 
     describe('#group', function() {
       beforeEach(function() {
-        analytics.stub(segment, 'send');
+        analytics.stub(segment, 'enqueue');
       });
 
-      it('should send groupId and traits', function() {
+      it('should enqueue groupId and traits', function() {
         analytics.group('id', { trait: true }, { opt: true });
-        var args = segment.send.args[0];
+        var args = segment.enqueue.args[0];
         analytics.assert(args[0] === '/g');
         analytics.assert(args[1].groupId === 'id');
         analytics.assert(args[1].context.opt === true);
@@ -405,12 +399,12 @@ describe('Segment.io', function() {
 
     describe('#alias', function() {
       beforeEach(function() {
-        analytics.stub(segment, 'send');
+        analytics.stub(segment, 'enqueue');
       });
 
-      it('should send .userId and .previousId', function() {
+      it('should enqueue .userId and .previousId', function() {
         analytics.alias('to', 'from');
-        var args = segment.send.args[0];
+        var args = segment.enqueue.args[0];
         analytics.assert(args[0] === '/a');
         analytics.assert(args[1].previousId === 'from');
         analytics.assert(args[1].userId === 'to');
@@ -420,7 +414,7 @@ describe('Segment.io', function() {
       it('should fallback to user.anonymousId if .previousId is omitted', function() {
         analytics.user().anonymousId('anon-id');
         analytics.alias('to');
-        var args = segment.send.args[0];
+        var args = segment.enqueue.args[0];
         analytics.assert(args[0] === '/a');
         analytics.assert(args[1].previousId === 'anon-id');
         analytics.assert(args[1].userId === 'to');
@@ -429,7 +423,7 @@ describe('Segment.io', function() {
 
       it('should fallback to user.anonymousId if .previousId and user.id are falsey', function() {
         analytics.alias('to');
-        var args = segment.send.args[0];
+        var args = segment.enqueue.args[0];
         analytics.assert(args[0] === '/a');
         analytics.assert(args[1].previousId);
         analytics.assert(args[1].previousId.length === 36);
@@ -438,7 +432,7 @@ describe('Segment.io', function() {
 
       it('should rename `.from` and `.to` to `.previousId` and `.userId`', function() {
         analytics.alias('user-id', 'previous-id');
-        var args = segment.send.args[0];
+        var args = segment.enqueue.args[0];
         analytics.assert(args[0] === '/a');
         analytics.assert(args[1].previousId === 'previous-id');
         analytics.assert(args[1].userId === 'user-id');
@@ -447,7 +441,7 @@ describe('Segment.io', function() {
       });
     });
 
-    describe('#send', function() {
+    describe('#enqueue', function() {
       beforeEach(function() {
         analytics.spy(segment, 'session');
       });
@@ -458,7 +452,7 @@ describe('Segment.io', function() {
         xhr.onCreate = spy;
 
         protocol('http:');
-        segment.send('/i', { userId: 'id' });
+        segment.enqueue('/i', { userId: 'id' });
 
         assert(spy.calledOnce);
         var req = spy.getCall(0).args[0];
@@ -471,7 +465,7 @@ describe('Segment.io', function() {
         xhr.onCreate = spy;
 
         protocol('https:');
-        segment.send('/i', { userId: 'id' });
+        segment.enqueue('/i', { userId: 'id' });
 
         assert(spy.calledOnce);
         var req = spy.getCall(0).args[0];
@@ -484,7 +478,7 @@ describe('Segment.io', function() {
         xhr.onCreate = spy;
 
         protocol('file:');
-        segment.send('/i', { userId: 'id' });
+        segment.enqueue('/i', { userId: 'id' });
 
         assert(spy.calledOnce);
         var req = spy.getCall(0).args[0];
@@ -497,27 +491,27 @@ describe('Segment.io', function() {
         xhr.onCreate = spy;
 
         protocol('chrome-extension:');
-        segment.send('/i', { userId: 'id' });
+        segment.enqueue('/i', { userId: 'id' });
 
         assert(spy.calledOnce);
         var req = spy.getCall(0).args[0];
         assert.strictEqual(req.url, 'https://api.segment.io/v1/i');
       }));
 
-      it('should send to `api.segment.io/v1` by default', sinon.test(function() {
+      it('should enqueue to `api.segment.io/v1` by default', sinon.test(function() {
         var xhr = sinon.useFakeXMLHttpRequest();
         var spy = sinon.spy();
         xhr.onCreate = spy;
 
         protocol('https:');
-        segment.send('/i', { userId: 'id' });
+        segment.enqueue('/i', { userId: 'id' });
 
         assert(spy.calledOnce);
         var req = spy.getCall(0).args[0];
         assert.strictEqual(req.url, 'https://api.segment.io/v1/i');
       }));
 
-      it('should send to `options.apiHost` when set', sinon.test(function() {
+      it('should enqueue to `options.apiHost` when set', sinon.test(function() {
         segment.options.apiHost = 'api.example.com';
 
         var xhr = sinon.useFakeXMLHttpRequest();
@@ -525,14 +519,14 @@ describe('Segment.io', function() {
         xhr.onCreate = spy;
 
         protocol('https:');
-        segment.send('/i', { userId: 'id' });
+        segment.enqueue('/i', { userId: 'id' });
 
         assert(spy.calledOnce);
         var req = spy.getCall(0).args[0];
         assert.strictEqual(req.url, 'https://api.example.com/i');
       }));
 
-      it('should send a normalized payload', sinon.test(function() {
+      it('should enqueue a normalized payload', sinon.test(function() {
         var xhr = sinon.useFakeXMLHttpRequest();
         var spy = sinon.spy();
         xhr.onCreate = spy;
@@ -544,108 +538,13 @@ describe('Segment.io', function() {
 
         segment.normalize = function() { return payload; };
 
-        segment.send('/i', {});
+        segment.enqueue('/i', {});
 
         assert(spy.calledOnce);
         var req = spy.getCall(0).args[0];
-        assert.strictEqual(req.requestBody, JSON.stringify(payload));
+        assert.strictEqual(JSON.parse(req.requestBody).key1, 'value1');
+        assert.strictEqual(JSON.parse(req.requestBody).key2, 'value2');
       }));
-
-      describe('beacon', function() {
-        beforeEach(function() {
-          if (!navigator.sendBeacon) {
-            navigator.sendBeacon = function() { return true; };
-          }
-        });
-
-        it('should default to ajax', sinon.test(function() {
-          var beacon = this.stub(navigator, 'sendBeacon').returns(true);
-
-          var ajax = this.spy();
-          var xhr = sinon.useFakeXMLHttpRequest();
-          xhr.onCreate = ajax;
-
-          segment.send('/i', { userId: 'id' });
-
-          assert(!beacon.called);
-          assert(ajax.calledOnce);
-        }));
-
-        it('should call beacon', sinon.test(function() {
-          var beacon = this.stub(navigator, 'sendBeacon').returns(true);
-
-          segment.options.beacon = true;
-
-          segment.send('/i', { userId: 'id' });
-
-          assert(beacon.calledOnce);
-          var args = beacon.getCall(0).args;
-          assert.strictEqual(args[0], 'https://api.segment.io/v1/i');
-          assert(typeof args[1] === 'string');
-        }));
-
-        it('should not fallback to ajax on beacon success', sinon.test(function() {
-          var beacon = this.stub(navigator, 'sendBeacon').returns(true);
-
-          var ajax = this.spy();
-          var xhr = sinon.useFakeXMLHttpRequest();
-          xhr.onCreate = ajax;
-
-          segment.options.beacon = true;
-
-          segment.send('/i', { userId: 'id' });
-
-          assert(beacon.calledOnce);
-          assert(!ajax.called);
-        }));
-
-        it('should fallback to ajax on beacon failure', sinon.test(function() {
-          var beacon = this.stub(navigator, 'sendBeacon').returns(false);
-
-          var ajax = this.spy();
-          var xhr = sinon.useFakeXMLHttpRequest();
-          xhr.onCreate = ajax;
-
-          segment.options.beacon = true;
-
-          segment.send('/i', { userId: 'id' });
-
-          assert(beacon.calledOnce);
-          assert(ajax.calledOnce);
-        }));
-
-        it('should fallback to ajax if beacon is not supported', sinon.test(function() {
-          navigator.sendBeacon = null;
-
-          var ajax = this.spy();
-          var xhr = sinon.useFakeXMLHttpRequest();
-          xhr.onCreate = ajax;
-
-          segment.options.beacon = true;
-
-          segment.send('/i', { userId: 'id' });
-
-          assert(ajax.calledOnce);
-        }));
-
-        it('should execute callback with no arguments', sinon.test(function(done) {
-          var beacon = this.stub(navigator, 'sendBeacon').returns(true);
-
-          var ajax = this.spy();
-          var xhr = sinon.useFakeXMLHttpRequest();
-          xhr.onCreate = ajax;
-
-          segment.options.beacon = true;
-
-          segment.send('/i', { userId: 'id' }, function(error, res) {
-            assert(!error);
-            assert(!res);
-            assert(beacon.calledOnce);
-            assert(!ajax.called);
-            done();
-          });
-        }));
-      });
 
       // FIXME(ndhoule): See note at `isPhantomJS` definition
       (isPhantomJS ? xdescribe : describe)('e2e tests', function() {
@@ -921,12 +820,11 @@ describe('Segment.io', function() {
     });
   });
 
-  describe('when retryQueue is enabled', function() {
+  describe('localStorage queueing', function() {
     beforeEach(function(done) {
       if (window.localStorage) {
         window.localStorage.clear();
       }
-      segment.options.retryQueue = true;
       analytics.once('ready', done);
       analytics.initialize();
     });
@@ -935,24 +833,21 @@ describe('Segment.io', function() {
       segment._lsqueue.stop();
     });
 
-    it('#send should add to the retry queue', function() {
+    it('#enqueue should add to the retry queue', function() {
       analytics.stub(segment._lsqueue, 'addItem');
-
-      segment.send('/i', { userId: '1' });
+      segment.enqueue('/i', { userId: '1' });
       assert(segment._lsqueue.addItem.calledOnce);
     });
 
-    it('should send the request', function() {
+    it('should send requests', function() {
       var xhr = sinon.useFakeXMLHttpRequest();
       var spy = sinon.spy();
       xhr.onCreate = spy;
 
-      segment.send('/i', { userId: '1' });
+      segment.enqueue('/i', { userId: '1' });
 
       assert(spy.calledOnce);
-
       var req = spy.getCall(0).args[0];
-
       var body = JSON.parse(req.requestBody);
       assert.equal(body.userId, '1');
     });
