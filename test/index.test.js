@@ -545,69 +545,6 @@ describe('Segment.io', function() {
         assert.strictEqual(JSON.parse(req.requestBody).key1, 'value1');
         assert.strictEqual(JSON.parse(req.requestBody).key2, 'value2');
       }));
-
-      // FIXME(ndhoule): See note at `isPhantomJS` definition
-      (isPhantomJS ? xdescribe : describe)('e2e tests', function() {
-        describe('/g', function() {
-          it('should succeed', function(done) {
-            var data = { groupId: 'gid', userId: 'uid' };
-
-            segment.send('/g', data, function(err, req) {
-              if (err) return done(err);
-              analytics.assert(JSON.parse(req.responseText).success);
-              done();
-            });
-          });
-        });
-
-        describe('/p', function() {
-          it('should succeed', function(done) {
-            var data = { userId: 'id', name: 'page', properties: {} };
-
-            segment.send('/p', data, function(err, req) {
-              if (err) return done(err);
-              analytics.assert(JSON.parse(req.responseText).success);
-              done();
-            });
-          });
-        });
-
-        describe('/a', function() {
-          it('should succeed', function(done) {
-            var data = { userId: 'id', from: 'b', to: 'a' };
-
-            segment.send('/a', data, function(err, req) {
-              if (err) return done(err);
-              analytics.assert(JSON.parse(req.responseText).success);
-              done();
-            });
-          });
-        });
-
-        describe('/t', function() {
-          it('should succeed', function(done) {
-            var data = { userId: 'id', event: 'my-event', properties: {} };
-
-            segment.send('/t', data, function(err, req) {
-              if (err) return done(err);
-              analytics.assert(JSON.parse(req.responseText).success);
-              done();
-            });
-          });
-        });
-
-        describe('/i', function() {
-          it('should succeed', function(done) {
-            var data = { userId: 'id' };
-
-            segment.send('/i', data, function(err, req) {
-              if (err) return done(err);
-              analytics.assert(JSON.parse(req.responseText).success);
-              done();
-            });
-          });
-        });
-      });
     });
 
     describe('#cookie', function() {
