@@ -13,6 +13,12 @@ var tester = require('@segment/analytics.js-integration-tester');
 var type = require('component-type');
 var sinon = require('sinon');
 
+// FIXME(ndhoule): clear-env's AJAX request clearing interferes with PhantomJS 2
+// Detect Phantom env and use it to disable affected tests. We should use a
+// better/more robust way of intercepting and canceling AJAX requests to avoid
+// this hackery
+var isPhantomJS = (/PhantomJS/).test(window.navigator.userAgent);
+
 describe('Segment.io', function() {
   var segment;
   var analytics;
@@ -545,6 +551,82 @@ describe('Segment.io', function() {
         assert.strictEqual(JSON.parse(req.requestBody).key1, 'value1');
         assert.strictEqual(JSON.parse(req.requestBody).key2, 'value2');
       }));
+    });
+
+    // FIXME(ndhoule): See note at `isPhantomJS` definition
+    (isPhantomJS ? xdescribe : describe)('e2e tests', function() {
+      afterEach(function() {
+        segment._lsqueue.stop();
+      });
+
+      describe('/g', function() {
+        it('should succeed', function(done) {
+          segment._lsqueue.on('processed', function(err, res, item) {
+            if (!item.msg.groupId) return; // page call :)
+            if (err) return done(err);
+            analytics.assert(JSON.parse(res.responseText).success);
+            done();
+          });
+          segment.enqueue('/g', { groupId: 'gid', userId: 'uid' });
+        });
+      });
+
+      describe('/p', function() {
+        it('should succeed', function(done) {
+          // page is invoked in beforeEach— no need to enqueue mock
+          segment._lsqueue.on('processed', function(err, res, item) {
+            if (item.msg.type !== 'page') return;
+            if (err) return done(err);
+            analytics.assert(JSON.parse(res.responseText).success);
+            done();
+          });
+        });
+      });
+
+      describe('/a', function() {
+        it('should succeed', function(done) {
+          var data = { userId: 'id', from: 'b', to: 'a' };
+
+          segment._lsqueue.on('processed', function(err, res, item) {
+            if (!item.msg.from) return; // ignore page call
+            if (err) return done(err);
+            analytics.assert(JSON.parse(res.responseText).success);
+            done();
+          });
+
+          segment.enqueue('/a', data);
+        });
+      });
+
+      describe('/t', function() {
+        it('should succeed', function(done) {
+          var data = { userId: 'id', event: 'my-event', properties: {} };
+
+          segment._lsqueue.on('processed', function(err, res, item) {
+            if (item.msg.event) return; // ignore page call
+            if (err) return done(err);
+            analytics.assert(JSON.parse(res.responseText).success);
+            done();
+          });
+
+          segment.enqueue('/t', data);
+        });
+      });
+
+      describe('/i', function() {
+        it('should succeed', function(done) {
+          var data = { userId: 'id' };
+
+          segment._lsqueue.on('processed', function(err, res, item) {
+            if (item.msg.userId) return; // ignore page call
+            if (err) return done(err);
+            analytics.assert(JSON.parse(res.responseText).success);
+            done();
+          });
+
+          segment.enqueue('/i', data);
+        });
+      });
     });
 
     describe('#cookie', function() {
