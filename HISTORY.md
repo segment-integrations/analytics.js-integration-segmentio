@@ -1,4 +1,10 @@
 
+3.4.1 / 2017-03-27
+==================
+
+  * XID Improvements - shorter cookies names, use top level domain module and address general comments.
+  * fix(normalize): Allow override context.campaign (#26)
+
 3.4.0 / 2017-01-25
 ==================
 
