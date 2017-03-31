@@ -808,7 +808,7 @@ describe('Segment.io', function() {
         });
 
         analytics.assert(!res);
-        analytics.assert(err.message === 'crossDomainId not enabled');
+        analytics.assert(err === 'crossDomainId not enabled');
       });
 
       it('should generate xid locally if there is only one (current hostname) server', function() {
