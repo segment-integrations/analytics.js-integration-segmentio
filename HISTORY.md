@@ -1,4 +1,11 @@
 
+3.4.2 / 2017-04-03
+==================
+
+  * Revert "use top-domain module instead of hand rolled function (#24)"
+  * Revert "Address comments. (#25)"
+  * Revert "Fix TLD implementation and add tests. (#28)"
+
 3.4.1 / 2017-03-30
 ==================
 
