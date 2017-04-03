@@ -780,19 +780,8 @@ describe('Segment.io', function() {
         segment.options.crossDomainIdServers = [
           'userdata.example1.com',
           'xid.domain2.com',
-          'xid.domain3.com'
+          'localhost'
         ];
-        segment._getCurrentHostname = function() {
-          return 'example1.com';
-        };
-        segment._getTld = function(domain) {
-          if (domain === 'example1.com' || domain === 'userdata.example1.com') {
-            return 'example1.com';
-          }
-          // Mimic topDomain which returns "" if you check a domain you're not
-          // currently on.
-          return '';
-        };
         analytics.stub(segment, 'onidentify');
       });
 
@@ -824,7 +813,7 @@ describe('Segment.io', function() {
 
       it('should generate xid locally if there is only one (current hostname) server', function() {
         segment.options.crossDomainIdServers = [
-          'userdata.example1.com'
+          'localhost'
         ];
 
         var res = null;
@@ -837,7 +826,7 @@ describe('Segment.io', function() {
         analytics.assert(crossDomainId);
 
         analytics.assert(res.crossDomainId === crossDomainId);
-        assert.strictEqual(res.fromDomain, 'example1.com');
+        analytics.assert(res.fromDomain === 'localhost');
       });
 
       it('should obtain crossDomainId', function() {
@@ -853,31 +842,11 @@ describe('Segment.io', function() {
         server.respond();
 
         var identify = segment.onidentify.args[0];
-        assert.strictEqual(identify[0].traits().crossDomainId, 'xdomain-id-1');
-        assert.strictEqual(res.crossDomainId, 'xdomain-id-1');
-        assert.strictEqual(res.fromDomain, 'xid.domain2.com');
+        analytics.assert(identify[0].traits().crossDomainId === 'xdomain-id-1');
+
+        analytics.assert(res.crossDomainId === 'xdomain-id-1');
+        analytics.assert(res.fromDomain === 'xid.domain2.com');
       });
-
-      it('should not make a request to the current domain', function() {
-        segment.retrieveCrossDomainId();
-        server.respondWith('GET', 'https://xid.domain2.com/v1/id/' + segment.options.apiKey, [
-          200,
-          { 'Content-Type': 'application/json' },
-          '{ "id": null }'
-        ]);
-        server.respondWith('GET', 'https://xid.domain3.com/v1/id/' + segment.options.apiKey, [
-          200,
-          { 'Content-Type': 'application/json' },
-          '{ "id": null }'
-        ]);
-        server.respondWith('GET', 'https://userid.example1.com/v1/id/', function() {
-          assert.fail();
-        });
-        server.respond();
-
-        assert.strictEqual(server.requests.length, 2); // Verify only 2 requests were made.
-      });
-
 
       it('should generate crossDomainId if no server has it', function() {
         var res = null;
@@ -890,7 +859,7 @@ describe('Segment.io', function() {
           { 'Content-Type': 'application/json' },
           '{ "id": null }'
         ]);
-        server.respondWith('GET', 'https://xid.domain3.com/v1/id/' + segment.options.apiKey, [
+        server.respondWith('GET', 'https://userdata.example1.com/v1/id/' + segment.options.apiKey, [
           200,
           { 'Content-Type': 'application/json' },
           '{ "id": null }'
@@ -900,8 +869,9 @@ describe('Segment.io', function() {
         var identify = segment.onidentify.args[0];
         var crossDomainId = identify[0].traits().crossDomainId;
         analytics.assert(crossDomainId);
-        assert.strictEqual(res.crossDomainId, crossDomainId);
-        assert.strictEqual(res.fromDomain, 'example1.com');
+
+        analytics.assert(res.crossDomainId === crossDomainId);
+        analytics.assert(res.fromDomain === 'localhost');
       });
 
       it('should bail if all servers error', function() {
@@ -917,7 +887,7 @@ describe('Segment.io', function() {
           { 'Content-Type': 'application/json' },
           ''
         ]);
-        server.respondWith('GET', 'https://xid.domain3.com/v1/id/' + segment.options.apiKey, [
+        server.respondWith('GET', 'https://userdata.example1.com/v1/id/' + segment.options.apiKey, [
           500,
           { 'Content-Type': 'application/json' },
           ''
@@ -943,7 +913,7 @@ describe('Segment.io', function() {
           { 'Content-Type': 'application/json' },
           ''
         ]);
-        server.respondWith('GET', 'https://xid.domain3.com/v1/id/' + segment.options.apiKey, [
+        server.respondWith('GET', 'https://userdata.example1.com/v1/id/' + segment.options.apiKey, [
           200,
           { 'Content-Type': 'application/json' },
           '{ "id": null }'
@@ -969,7 +939,7 @@ describe('Segment.io', function() {
           { 'Content-Type': 'application/json' },
           ''
         ]);
-        server.respondWith('GET', 'https://xid.domain3.com/v1/id/' + segment.options.apiKey, [
+        server.respondWith('GET', 'https://userdata.example1.com/v1/id/' + segment.options.apiKey, [
           200,
           { 'Content-Type': 'application/json' },
           '{ "id": "xidxid" }'
@@ -978,8 +948,9 @@ describe('Segment.io', function() {
 
         var identify = segment.onidentify.args[0];
         analytics.assert(identify[0].traits().crossDomainId === 'xidxid');
-        assert.strictEqual(res.crossDomainId, 'xidxid');
-        assert.strictEqual(res.fromDomain, 'xid.domain3.com');
+
+        analytics.assert(res.crossDomainId === 'xidxid');
+        analytics.assert(res.fromDomain === 'userdata.example1.com');
         analytics.assert(!err);
       });
     });
