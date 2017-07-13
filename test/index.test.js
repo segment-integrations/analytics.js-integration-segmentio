@@ -554,28 +554,25 @@ describe('Segment.io', function() {
     });
 
     // FIXME(ndhoule): See note at `isPhantomJS` definition
-    (isPhantomJS ? xdescribe : describe)('e2e tests', function() {
-      afterEach(function() {
-        segment._lsqueue.stop();
+    (isPhantomJS ? xdescribe : describe)('e2e tests — without queueing', function() {
+      beforeEach(function() {
+        segment.options.retryQueue = false;
       });
 
       describe('/g', function() {
         it('should succeed', function(done) {
-          segment._lsqueue.on('processed', function(err, res, item) {
-            if (!item.msg.groupId) return; // page call :)
+          segment.enqueue('/g', { groupId: 'gid', userId: 'uid' }, function(err, res) {
             if (err) return done(err);
             analytics.assert(JSON.parse(res.responseText).success);
             done();
           });
-          segment.enqueue('/g', { groupId: 'gid', userId: 'uid' });
         });
       });
 
       describe('/p', function() {
         it('should succeed', function(done) {
-          // page is invoked in beforeEach— no need to enqueue mock
-          segment._lsqueue.on('processed', function(err, res, item) {
-            if (item.msg.type !== 'page') return;
+          var data = { userId: 'id', name: 'page', properties: {} };
+          segment.enqueue('/p', data, function(err, res) {
             if (err) return done(err);
             analytics.assert(JSON.parse(res.responseText).success);
             done();
@@ -586,14 +583,75 @@ describe('Segment.io', function() {
       describe('/a', function() {
         it('should succeed', function(done) {
           var data = { userId: 'id', from: 'b', to: 'a' };
-
-          segment._lsqueue.on('processed', function(err, res, item) {
-            if (!item.msg.from) return; // ignore page call
+          segment.enqueue('/a', data, function(err, res) {
             if (err) return done(err);
             analytics.assert(JSON.parse(res.responseText).success);
             done();
           });
+        });
+      });
 
+      describe('/t', function() {
+        it('should succeed', function(done) {
+          var data = { userId: 'id', event: 'my-event', properties: {} };
+
+          segment.enqueue('/t', data, function(err, res) {
+            if (err) return done(err);
+            analytics.assert(JSON.parse(res.responseText).success);
+            done();
+          });
+        });
+      });
+
+      describe('/i', function() {
+        it('should succeed', function(done) {
+          var data = { userId: 'id' };
+
+          segment.enqueue('/i', data, function(err, res) {
+            if (err) return done(err);
+            analytics.assert(JSON.parse(res.responseText).success);
+            done();
+          });
+        });
+      });
+    });
+
+    (isPhantomJS ? xdescribe : describe)('e2e tests — with queueing', function() {
+      beforeEach(function() {
+        segment.options.retryQueue = true;
+        analytics.initialize();
+      });
+
+      describe('/g', function() {
+        it('should succeed', function(done) {
+          segment._lsqueue.on('processed', function(err, res) {
+            if (err) return done(err);
+            analytics.assert(JSON.parse(res.responseText).success);
+            done();
+          });
+          segment.enqueue('/g', { groupId: 'gid', userId: 'uid' });
+        });
+      });
+
+      describe('/p', function() {
+        it('should succeed', function(done) {
+          segment._lsqueue.on('processed', function(err, res) {
+            if (err) return done(err);
+            analytics.assert(JSON.parse(res.responseText).success);
+            done();
+          });
+          segment.enqueue('/p', { userId: 'id', name: 'page', properties: {} });
+        });
+      });
+
+      describe('/a', function() {
+        it('should succeed', function(done) {
+          var data = { userId: 'id', from: 'b', to: 'a' };
+          segment._lsqueue.on('processed', function(err, res) {
+            if (err) return done(err);
+            analytics.assert(JSON.parse(res.responseText).success);
+            done();
+          });
           segment.enqueue('/a', data);
         });
       });
@@ -602,8 +660,7 @@ describe('Segment.io', function() {
         it('should succeed', function(done) {
           var data = { userId: 'id', event: 'my-event', properties: {} };
 
-          segment._lsqueue.on('processed', function(err, res, item) {
-            if (item.msg.event) return; // ignore page call
+          segment._lsqueue.on('processed', function(err, res) {
             if (err) return done(err);
             analytics.assert(JSON.parse(res.responseText).success);
             done();
@@ -617,8 +674,7 @@ describe('Segment.io', function() {
         it('should succeed', function(done) {
           var data = { userId: 'id' };
 
-          segment._lsqueue.on('processed', function(err, res, item) {
-            if (item.msg.userId) return; // ignore page call
+          segment._lsqueue.on('processed', function(err, res) {
             if (err) return done(err);
             analytics.assert(JSON.parse(res.responseText).success);
             done();
@@ -845,6 +901,7 @@ describe('Segment.io', function() {
         window.localStorage.clear();
       }
       analytics.once('ready', done);
+      segment.options.retryQueue = true;
       analytics.initialize();
     });
 
