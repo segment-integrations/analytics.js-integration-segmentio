@@ -1,4 +1,19 @@
 
+3.4.2 / 2017-04-03
+==================
+
+  * Revert "use top-domain module instead of hand rolled function (#24)"
+  * Revert "Address comments. (#25)"
+  * Revert "Fix TLD implementation and add tests. (#28)"
+
+3.4.1 / 2017-03-30
+==================
+
+  * Address general XID comments. (#25)
+  * use top-domain module instead of hand rolled function (#24)
+  * fix(normalize): Allow override context.campaign (#26)
+  * Improve cookie behavior via using shorter cookie names (#22)
+
 3.4.0 / 2017-01-25
 ==================
 
