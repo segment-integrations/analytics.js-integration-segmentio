@@ -646,41 +646,34 @@ describe('Segment.io', function() {
 
       describe('/a', function() {
         it('should succeed', function(done) {
-          var data = { userId: 'id', from: 'b', to: 'a' };
           segment._lsqueue.on('processed', function(err, res) {
             if (err) return done(err);
             analytics.assert(JSON.parse(res.responseText).success);
             done();
           });
-          segment.enqueue('/a', data);
+          segment.enqueue('/a', { userId: 'id', from: 'b', to: 'a' });
         });
       });
 
       describe('/t', function() {
         it('should succeed', function(done) {
-          var data = { userId: 'id', event: 'my-event', properties: {} };
-
           segment._lsqueue.on('processed', function(err, res) {
             if (err) return done(err);
             analytics.assert(JSON.parse(res.responseText).success);
             done();
           });
-
-          segment.enqueue('/t', data);
+          segment.enqueue('/t', { userId: 'id', event: 'my-event', properties: {} });
         });
       });
 
       describe('/i', function() {
         it('should succeed', function(done) {
-          var data = { userId: 'id' };
-
           segment._lsqueue.on('processed', function(err, res) {
             if (err) return done(err);
             analytics.assert(JSON.parse(res.responseText).success);
             done();
           });
-
-          segment.enqueue('/i', data);
+          segment.enqueue('/i', { userId: 'id' });
         });
       });
     });
