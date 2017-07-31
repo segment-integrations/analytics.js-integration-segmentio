@@ -1,4 +1,9 @@
 
+3.5.0 / 2017-07-31
+==================
+
+  * Enqueue All Requests to LocalStorage for Durability (#23)
+
 3.4.2 / 2017-04-03
 ==================
 
