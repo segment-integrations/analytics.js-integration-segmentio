@@ -1,4 +1,9 @@
 
+3.5.3 / 2017-08-02
+==================
+
+  * retryQueue falls back to inMemory if localStorage is full
+
 3.5.2 / 2017-08-02
 ==================
 
