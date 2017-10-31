@@ -312,6 +312,21 @@ describe('Segment.io', function() {
         analytics.assert(!object.context.amp);
       });
 
+      describe('failed initializations', function() {
+        it('should add failedInitializations as part of _metadata object if this.analytics.failedInitilizations is not empty', function() {
+          var spy = sinon.spy(segment, 'normalize');
+          var TestIntegration = integration('TestIntegration');
+          TestIntegration.prototype.initialize = function() { throw new Error('Uh oh!'); };
+          TestIntegration.prototype.page = function() {};
+          var testIntegration = new TestIntegration();
+          analytics.use(TestIntegration);
+          analytics.add(testIntegration);
+          analytics.initialize();
+          analytics.page();
+          assert(spy.returnValues[0]._metadata.failedInitializations[0] === 'TestIntegration');
+        });
+      }); 
+
       describe('unbundling', function() {
         var segment;
 
