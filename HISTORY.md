@@ -1,3 +1,7 @@
+3.6.0 / 2017-11-01
+==================
+
+  * add lookup for failedInitializations and pass as _metadata
 
 3.5.4 / 2017-08-24
 ==================
