@@ -325,7 +325,7 @@ describe('Segment.io', function() {
           analytics.page();
           assert(spy.returnValues[0]._metadata.failedInitializations[0] === 'TestIntegration');
         });
-      }); 
+      });
 
       describe('unbundling', function() {
         var segment;
@@ -442,6 +442,13 @@ describe('Segment.io', function() {
         analytics.assert(args[1].context.opt === true);
         analytics.assert(args[1].traits.trait === true);
         analytics.assert(args[1].timestamp);
+      });
+
+      it('should merge blocked traits back in', function() {
+        analytics.group('id', { trait1: true }, { blockedTraits: { trait2: true } });
+        var args = segment.enqueue.args[0];
+        analytics.assert(args[1].traits.trait1 === true);
+        analytics.assert(args[1].traits.trait2 === true);
       });
     });
 
