@@ -12,6 +12,7 @@ var store = require('yields-store');
 var tester = require('@segment/analytics.js-integration-tester');
 var type = require('component-type');
 var sinon = require('sinon');
+var send = require('@segment/send-json');
 
 // FIXME(ndhoule): clear-env's AJAX request clearing interferes with PhantomJS 2
 // Detect Phantom env and use it to disable affected tests. We should use a
@@ -325,7 +326,7 @@ describe('Segment.io', function() {
           analytics.page();
           assert(spy.returnValues[0]._metadata.failedInitializations[0] === 'TestIntegration');
         });
-      }); 
+      });
 
       describe('unbundling', function() {
         var segment;
@@ -969,6 +970,19 @@ describe('Segment.io', function() {
       var req = spy.getCall(0).args[0];
       var body = JSON.parse(req.requestBody);
       assert.equal(body.userId, '1');
+    });
+  });
+
+  describe('send json', function() {
+    it('should work', function(done) {
+      var headers = { 'Content-Type': 'application/json' };
+
+      send('http://httpbin.org/post', [1, 2, 3], headers, function(err, req) {
+        if (err) return done(new Error(err.message));
+        var res = JSON.parse(req.responseText);
+        assert(res);
+        done();
+      });
     });
   });
 });
