@@ -1,8 +1,13 @@
+
+3.6.2 / 2018-17-04
+==================
+
+  * Add timeout for requests that will be retried.
+
 3.6.1 / 2018-15-04
 ==================
 
   * Retry messages only upto 10 times.
-
 
 3.6.0 / 2017-11-01
 ==================
