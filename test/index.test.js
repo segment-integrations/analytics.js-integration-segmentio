@@ -12,6 +12,7 @@ var store = require('yields-store');
 var tester = require('@segment/analytics.js-integration-tester');
 var type = require('component-type');
 var sinon = require('sinon');
+var send = require('@segment/send-json');
 
 // FIXME(ndhoule): clear-env's AJAX request clearing interferes with PhantomJS 2
 // Detect Phantom env and use it to disable affected tests. We should use a
@@ -325,7 +326,7 @@ describe('Segment.io', function() {
           analytics.page();
           assert(spy.returnValues[0]._metadata.failedInitializations[0] === 'TestIntegration');
         });
-      }); 
+      });
 
       describe('unbundling', function() {
         var segment;
@@ -490,12 +491,18 @@ describe('Segment.io', function() {
     });
 
     describe('#enqueue', function() {
+      var xhr;
+
       beforeEach(function() {
         analytics.spy(segment, 'session');
+        xhr = sinon.useFakeXMLHttpRequest();
+      });
+
+      afterEach(function() {
+        if (xhr.restore) xhr.restore();
       });
 
       it('should use https: protocol when http:', sinon.test(function() {
-        var xhr = sinon.useFakeXMLHttpRequest();
         var spy = sinon.spy();
         xhr.onCreate = spy;
 
@@ -508,7 +515,6 @@ describe('Segment.io', function() {
       }));
 
       it('should use https: protocol when https:', sinon.test(function() {
-        var xhr = sinon.useFakeXMLHttpRequest();
         var spy = sinon.spy();
         xhr.onCreate = spy;
 
@@ -521,7 +527,6 @@ describe('Segment.io', function() {
       }));
 
       it('should use https: protocol when https:', sinon.test(function() {
-        var xhr = sinon.useFakeXMLHttpRequest();
         var spy = sinon.spy();
         xhr.onCreate = spy;
 
@@ -534,7 +539,6 @@ describe('Segment.io', function() {
       }));
 
       it('should use https: protocol when chrome-extension:', sinon.test(function() {
-        var xhr = sinon.useFakeXMLHttpRequest();
         var spy = sinon.spy();
         xhr.onCreate = spy;
 
@@ -547,7 +551,6 @@ describe('Segment.io', function() {
       }));
 
       it('should enqueue to `api.segment.io/v1` by default', sinon.test(function() {
-        var xhr = sinon.useFakeXMLHttpRequest();
         var spy = sinon.spy();
         xhr.onCreate = spy;
 
@@ -562,7 +565,6 @@ describe('Segment.io', function() {
       it('should enqueue to `options.apiHost` when set', sinon.test(function() {
         segment.options.apiHost = 'api.example.com';
 
-        var xhr = sinon.useFakeXMLHttpRequest();
         var spy = sinon.spy();
         xhr.onCreate = spy;
 
@@ -575,7 +577,6 @@ describe('Segment.io', function() {
       }));
 
       it('should enqueue a normalized payload', sinon.test(function() {
-        var xhr = sinon.useFakeXMLHttpRequest();
         var spy = sinon.spy();
         xhr.onCreate = spy;
 
@@ -939,7 +940,10 @@ describe('Segment.io', function() {
   });
 
   describe('localStorage queueing', function() {
+    var xhr;
+
     beforeEach(function(done) {
+      xhr = sinon.useFakeXMLHttpRequest();
       if (window.localStorage) {
         window.localStorage.clear();
       }
@@ -950,6 +954,7 @@ describe('Segment.io', function() {
 
     afterEach(function() {
       segment._lsqueue.stop();
+      xhr.restore();
     });
 
     it('#enqueue should add to the retry queue', function() {
@@ -959,7 +964,6 @@ describe('Segment.io', function() {
     });
 
     it('should send requests', function() {
-      var xhr = sinon.useFakeXMLHttpRequest();
       var spy = sinon.spy();
       xhr.onCreate = spy;
 
@@ -969,6 +973,36 @@ describe('Segment.io', function() {
       var req = spy.getCall(0).args[0];
       var body = JSON.parse(req.requestBody);
       assert.equal(body.userId, '1');
+    });
+  });
+
+  describe('sendJsonWithTimeout', function() {
+    var protocol = location.protocol;
+    var hostname = location.hostname;
+    var port = location.port;
+    var endpoint = '/base/data';
+    var url = protocol + '//' + hostname + ':' + port + endpoint;
+
+    var headers = { 'Content-Type': 'application/json' };
+
+    it('should work', function(done) {
+      if (send.type !== 'xhr') return done();
+
+      Segment.sendJsonWithTimeout(url, [1, 2, 3], headers, 10 * 1000, function(err, req) {
+        if (err) return done(new Error(err.message));
+        var res = JSON.parse(req.responseText);
+        assert(res === true);
+        done();
+      });
+    });
+
+    it('should timeout', function(done) {
+      if (send.type !== 'xhr') return done();
+
+      Segment.sendJsonWithTimeout(url, [1, 2, 3], headers, 1, function(err) {
+        assert(err.type === 'timeout');
+        done();
+      });
     });
   });
 });
