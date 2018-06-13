@@ -495,11 +495,13 @@ describe('Segment.io', function() {
 
       beforeEach(function() {
         analytics.spy(segment, 'session');
+        sinon.spy(segment, 'debug');
         xhr = sinon.useFakeXMLHttpRequest();
       });
 
       afterEach(function() {
         if (xhr.restore) xhr.restore();
+        if (segment.debug.restore) segment.debug.restore();
       });
 
       it('should use https: protocol when http:', sinon.test(function() {
@@ -593,6 +595,47 @@ describe('Segment.io', function() {
         var req = spy.getCall(0).args[0];
         assert.strictEqual(JSON.parse(req.requestBody).key1, 'value1');
         assert.strictEqual(JSON.parse(req.requestBody).key2, 'value2');
+      }));
+
+      it('should not log a normal payload', sinon.test(function() {
+        var spy = sinon.spy();
+        xhr.onCreate = spy;
+
+        var payload = {
+          key1: 'value1',
+          key2: 'value2'
+        };
+
+        segment.normalize = function() { return payload; };
+
+        segment.enqueue('/i', {});
+
+        sinon.assert.neverCalledWith(segment.debug, 'message must be less than 32kb %O', payload);
+
+        assert(spy.calledOnce);
+        var req = spy.getCall(0).args[0];
+        assert.strictEqual(JSON.parse(req.requestBody).key1, 'value1');
+        assert.strictEqual(JSON.parse(req.requestBody).key2, 'value2');
+      }));
+
+      it('should enqueue an oversized payload', sinon.test(function() {
+        var spy = sinon.spy();
+        xhr.onCreate = spy;
+
+        var payload = {};
+        for (var i = 0; i < 1750; i++) {
+          payload['key' + i] = 'value' + i;
+        }
+
+        segment.normalize = function() { return payload; };
+
+        segment.enqueue('/i', {});
+
+        sinon.assert.calledWith(segment.debug, 'message must be less than 32kb %O', payload);
+
+        assert(spy.calledOnce);
+        var req = spy.getCall(0).args[0];
+        assert.strictEqual(JSON.parse(req.requestBody).key1749, 'value1749');
       }));
     });
 
