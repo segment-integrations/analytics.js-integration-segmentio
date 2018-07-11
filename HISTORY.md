@@ -1,4 +1,9 @@
 
+3.6.4 / 2018-11-07
+==================
+
+  * [Fix](https://github.com/segment-integrations/analytics.js-integration-segmentio/pull/45): Update localstorage-retry version with fix for adding multiple items to the queue.
+
 3.6.3 / 2018-28-06
 ==================
 
