@@ -1,4 +1,9 @@
 
+3.6.5 / 2018-17-08
+==================
+
+  * [Fix](https://github.com/segment-integrations/analytics.js-integration-segmentio/pull/47): Update localstorage-retry version with fix limiting the inProgress queue 
+
 3.6.4 / 2018-11-07
 ==================
 
