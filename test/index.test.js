@@ -1082,7 +1082,7 @@ describe('Segment.io', function() {
         xhr.restore();
       });
 
-      [400, 404, 500, 503].forEach(function(code) {
+      [429, 500, 503].forEach(function(code) {
         it('should throw on ' + code + ' HTTP errors', function(done) {
           if (send.type !== 'xhr') return done();
   
@@ -1095,7 +1095,7 @@ describe('Segment.io', function() {
         });
       });
 
-      [200, 204, 300, 302].forEach(function(code) {
+      [200, 204, 300, 302, 400, 404].forEach(function(code) {
         it('should not throw on ' + code + ' HTTP errors', function(done) {
           if (send.type !== 'xhr') return done();
   
