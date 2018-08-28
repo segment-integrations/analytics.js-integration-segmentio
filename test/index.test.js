@@ -13,6 +13,8 @@ var tester = require('@segment/analytics.js-integration-tester');
 var type = require('component-type');
 var sinon = require('sinon');
 var send = require('@segment/send-json');
+var Schedule = require('@segment/localstorage-retry/lib/schedule');
+var lolex = require('lolex');
 
 // FIXME(ndhoule): clear-env's AJAX request clearing interferes with PhantomJS 2
 // Detect Phantom env and use it to disable affected tests. We should use a
@@ -1017,6 +1019,23 @@ describe('Segment.io', function() {
       var body = JSON.parse(req.requestBody);
       assert.equal(body.userId, '1');
     });
+
+    it('should retry on HTTP errors', function() {
+      var clock = lolex.createClock(0);
+      var spy = sinon.spy();
+
+      Schedule.setClock(clock);
+      xhr.onCreate = spy;
+      
+      segment.enqueue('/i', { userId: '1' });
+      assert(spy.calledOnce);
+
+      var req = spy.getCall(0).args[0];
+      req.respond(500, null, 'segment machine broke');
+
+      clock.tick(segment._lsqueue.getDelay(1));
+      assert(spy.calledTwice);
+    });
   });
 
   describe('sendJsonWithTimeout', function() {
@@ -1045,6 +1064,45 @@ describe('Segment.io', function() {
       Segment.sendJsonWithTimeout(url, [1, 2, 3], headers, 1, function(err) {
         assert(err.type === 'timeout');
         done();
+      }); 
+    });
+
+    describe('error handling', function() {
+      var xhr;
+      var req;
+
+      beforeEach(function() {
+        xhr = sinon.useFakeXMLHttpRequest();
+        xhr.onCreate = function(_req) {
+          req = _req;
+        };
+      });
+
+      afterEach(function() {
+        xhr.restore();
+      });
+
+      [429, 500, 503].forEach(function(code) {
+        it('should throw on ' + code + ' HTTP errors', function(done) {
+          if (send.type !== 'xhr') return done();
+  
+          Segment.sendJsonWithTimeout(url + '/null', [1, 2, 3], headers, 10 * 1000, function(err) {
+            assert(RegExp('^HTTP Error ' + code + ' (.+)$').test(err.message));
+            done();
+          });
+
+          req.respond(code, null, 'nope');
+        });
+      });
+
+      [200, 204, 300, 302, 400, 404].forEach(function(code) {
+        it('should not throw on ' + code + ' HTTP errors', function(done) {
+          if (send.type !== 'xhr') return done();
+  
+          Segment.sendJsonWithTimeout(url + '/null', [1, 2, 3], headers, 10 * 1000, done);
+
+          req.respond(code, null, 'ok');
+        });
       });
     });
   });
