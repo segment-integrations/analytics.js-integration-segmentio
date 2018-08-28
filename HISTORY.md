@@ -1,4 +1,9 @@
 
+3.7.0 / 2018-28-08
+==================
+
+  * [Improvement](https://github.com/segment-integrations/analytics.js-integration-segmentio/pull/48): Handle 429 and 5xx HTTP errors
+
 3.6.5 / 2018-17-08
 ==================
 
