@@ -413,6 +413,13 @@ describe('Segment.io', function() {
         analytics.assert(args[1].context.opt === true);
         analytics.assert(args[1].timestamp);
       });
+
+      it('should merge blocked traits back in', function() {
+        analytics.identify('id', { trait1: true }, { blockedTraits: { trait2: true } });
+        var json = segment.enqueue.args[0][1];
+        analytics.assert(json.traits.trait1 === true);
+        analytics.assert(json.traits.trait2 === true);
+      });
     });
 
     describe('#track', function() {
@@ -445,6 +452,13 @@ describe('Segment.io', function() {
         analytics.assert(args[1].context.opt === true);
         analytics.assert(args[1].traits.trait === true);
         analytics.assert(args[1].timestamp);
+      });
+
+      it('should merge blocked traits back in', function() {
+        analytics.group('id', { trait1: true }, { blockedTraits: { trait2: true } });
+        var json = segment.enqueue.args[0][1];
+        analytics.assert(json.traits.trait1 === true);
+        analytics.assert(json.traits.trait2 === true);
       });
     });
 
