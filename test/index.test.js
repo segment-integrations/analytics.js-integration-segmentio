@@ -69,7 +69,8 @@ describe('Segment.io', function() {
 
   it('should have the right settings', function() {
     analytics.compare(Segment, integration('Segment.io')
-      .option('apiKey', ''));
+      .option('apiKey', '')
+      .option('retryQueue', true));
   });
 
   it('should always be turned on', function(done) {
@@ -382,606 +383,628 @@ describe('Segment.io', function() {
       analytics.page();
     });
 
-    describe('#page', function() {
-      beforeEach(function() {
-        analytics.stub(segment, 'enqueue');
-      });
-
-      it('should enqueue section, name and properties', function() {
-        analytics.page('section', 'name', { property: true }, { opt: true });
-        var args = segment.enqueue.args[0];
-        analytics.assert(args[0] === '/p');
-        analytics.assert(args[1].name === 'name');
-        analytics.assert(args[1].category === 'section');
-        analytics.assert(args[1].properties.property === true);
-        analytics.assert(args[1].context.opt === true);
-        analytics.assert(args[1].timestamp);
+    describe('#settings', function() {
+      it('should have retryQueue enabled', function() {
+        analytics.assert(segment.options.retryQueue === true);
       });
     });
 
-    describe('#identify', function() {
-      beforeEach(function() {
-        analytics.stub(segment, 'enqueue');
-      });
+    var cases = {
+      'retryQueue enabled': true,
+      'retryQueue disabled': false
+    };
 
-      it('should enqueue an id and traits', function() {
-        analytics.identify('id', { trait: true }, { opt: true });
-        var args = segment.enqueue.args[0];
-        analytics.assert(args[0] === '/i');
-        analytics.assert(args[1].userId === 'id');
-        analytics.assert(args[1].traits.trait === true);
-        analytics.assert(args[1].context.opt === true);
-        analytics.assert(args[1].timestamp);
-      });
-    });
+    for (var scenario in cases) {
+      if (cases.hasOwnProperty(scenario)) {
+        continue;
+      }
+      describe('with ' + scenario, function() {
+        beforeEach(function() {
+          segment.options.retryQueue = cases[scenario];
+        });
 
-    describe('#track', function() {
-      beforeEach(function() {
-        analytics.stub(segment, 'enqueue');
-      });
+        describe('#page', function() {
+          beforeEach(function() {
+            analytics.stub(segment, 'enqueue');
+          });
 
-      it('should enqueue an event and properties', function() {
-        analytics.track('event', { prop: true }, { opt: true });
-        var args = segment.enqueue.args[0];
-        analytics.assert(args[0] === '/t');
-        analytics.assert(args[1].event === 'event');
-        analytics.assert(args[1].context.opt === true);
-        analytics.assert(args[1].properties.prop === true);
-        analytics.assert(args[1].traits == null);
-        analytics.assert(args[1].timestamp);
-      });
-    });
+          it('should enqueue section, name and properties', function() {
+            analytics.page('section', 'name', { property: true }, { opt: true });
+            var args = segment.enqueue.args[0];
+            analytics.assert(args[0] === '/p');
+            analytics.assert(args[1].name === 'name');
+            analytics.assert(args[1].category === 'section');
+            analytics.assert(args[1].properties.property === true);
+            analytics.assert(args[1].context.opt === true);
+            analytics.assert(args[1].timestamp);
+          });
+        });
 
-    describe('#group', function() {
-      beforeEach(function() {
-        analytics.stub(segment, 'enqueue');
-      });
+        describe('#identify', function() {
+          beforeEach(function() {
+            analytics.stub(segment, 'enqueue');
+          });
 
-      it('should enqueue groupId and traits', function() {
-        analytics.group('id', { trait: true }, { opt: true });
-        var args = segment.enqueue.args[0];
-        analytics.assert(args[0] === '/g');
-        analytics.assert(args[1].groupId === 'id');
-        analytics.assert(args[1].context.opt === true);
-        analytics.assert(args[1].traits.trait === true);
-        analytics.assert(args[1].timestamp);
-      });
-    });
+          it('should enqueue an id and traits', function() {
+            analytics.identify('id', { trait: true }, { opt: true });
+            var args = segment.enqueue.args[0];
+            analytics.assert(args[0] === '/i');
+            analytics.assert(args[1].userId === 'id');
+            analytics.assert(args[1].traits.trait === true);
+            analytics.assert(args[1].context.opt === true);
+            analytics.assert(args[1].timestamp);
+          });
+        });
 
-    describe('#alias', function() {
-      beforeEach(function() {
-        analytics.stub(segment, 'enqueue');
-      });
+        describe('#track', function() {
+          beforeEach(function() {
+            analytics.stub(segment, 'enqueue');
+          });
 
-      it('should enqueue .userId and .previousId', function() {
-        analytics.alias('to', 'from');
-        var args = segment.enqueue.args[0];
-        analytics.assert(args[0] === '/a');
-        analytics.assert(args[1].previousId === 'from');
-        analytics.assert(args[1].userId === 'to');
-        analytics.assert(args[1].timestamp);
-      });
+          it('should enqueue an event and properties', function() {
+            analytics.track('event', { prop: true }, { opt: true });
+            var args = segment.enqueue.args[0];
+            analytics.assert(args[0] === '/t');
+            analytics.assert(args[1].event === 'event');
+            analytics.assert(args[1].context.opt === true);
+            analytics.assert(args[1].properties.prop === true);
+            analytics.assert(args[1].traits == null);
+            analytics.assert(args[1].timestamp);
+          });
+        });
 
-      it('should fallback to user.anonymousId if .previousId is omitted', function() {
-        analytics.user().anonymousId('anon-id');
-        analytics.alias('to');
-        var args = segment.enqueue.args[0];
-        analytics.assert(args[0] === '/a');
-        analytics.assert(args[1].previousId === 'anon-id');
-        analytics.assert(args[1].userId === 'to');
-        analytics.assert(args[1].timestamp);
-      });
+        describe('#group', function() {
+          beforeEach(function() {
+            analytics.stub(segment, 'enqueue');
+          });
 
-      it('should fallback to user.anonymousId if .previousId and user.id are falsey', function() {
-        analytics.alias('to');
-        var args = segment.enqueue.args[0];
-        analytics.assert(args[0] === '/a');
-        analytics.assert(args[1].previousId);
-        analytics.assert(args[1].previousId.length === 36);
-        analytics.assert(args[1].userId === 'to');
-      });
+          it('should enqueue groupId and traits', function() {
+            analytics.group('id', { trait: true }, { opt: true });
+            var args = segment.enqueue.args[0];
+            analytics.assert(args[0] === '/g');
+            analytics.assert(args[1].groupId === 'id');
+            analytics.assert(args[1].context.opt === true);
+            analytics.assert(args[1].traits.trait === true);
+            analytics.assert(args[1].timestamp);
+          });
+        });
 
-      it('should rename `.from` and `.to` to `.previousId` and `.userId`', function() {
-        analytics.alias('user-id', 'previous-id');
-        var args = segment.enqueue.args[0];
-        analytics.assert(args[0] === '/a');
-        analytics.assert(args[1].previousId === 'previous-id');
-        analytics.assert(args[1].userId === 'user-id');
-        analytics.assert(args[1].from == null);
-        analytics.assert(args[1].to == null);
-      });
-    });
+        describe('#alias', function() {
+          beforeEach(function() {
+            analytics.stub(segment, 'enqueue');
+          });
 
-    describe('#enqueue', function() {
-      var xhr;
+          it('should enqueue .userId and .previousId', function() {
+            analytics.alias('to', 'from');
+            var args = segment.enqueue.args[0];
+            analytics.assert(args[0] === '/a');
+            analytics.assert(args[1].previousId === 'from');
+            analytics.assert(args[1].userId === 'to');
+            analytics.assert(args[1].timestamp);
+          });
 
-      beforeEach(function() {
-        analytics.spy(segment, 'session');
-        sinon.spy(segment, 'debug');
-        xhr = sinon.useFakeXMLHttpRequest();
-      });
+          it('should fallback to user.anonymousId if .previousId is omitted', function() {
+            analytics.user().anonymousId('anon-id');
+            analytics.alias('to');
+            var args = segment.enqueue.args[0];
+            analytics.assert(args[0] === '/a');
+            analytics.assert(args[1].previousId === 'anon-id');
+            analytics.assert(args[1].userId === 'to');
+            analytics.assert(args[1].timestamp);
+          });
 
-      afterEach(function() {
-        if (xhr.restore) xhr.restore();
-        if (segment.debug.restore) segment.debug.restore();
-      });
+          it('should fallback to user.anonymousId if .previousId and user.id are falsey', function() {
+            analytics.alias('to');
+            var args = segment.enqueue.args[0];
+            analytics.assert(args[0] === '/a');
+            analytics.assert(args[1].previousId);
+            analytics.assert(args[1].previousId.length === 36);
+            analytics.assert(args[1].userId === 'to');
+          });
 
-      it('should use https: protocol when http:', sinon.test(function() {
-        var spy = sinon.spy();
-        xhr.onCreate = spy;
+          it('should rename `.from` and `.to` to `.previousId` and `.userId`', function() {
+            analytics.alias('user-id', 'previous-id');
+            var args = segment.enqueue.args[0];
+            analytics.assert(args[0] === '/a');
+            analytics.assert(args[1].previousId === 'previous-id');
+            analytics.assert(args[1].userId === 'user-id');
+            analytics.assert(args[1].from == null);
+            analytics.assert(args[1].to == null);
+          });
+        });
 
-        protocol('http:');
-        segment.enqueue('/i', { userId: 'id' });
+        describe('#enqueue', function() {
+          var xhr;
 
-        assert(spy.calledOnce);
-        var req = spy.getCall(0).args[0];
-        assert.strictEqual(req.url, 'https://api.segment.io/v1/i');
-      }));
+          beforeEach(function() {
+            analytics.spy(segment, 'session');
+            sinon.spy(segment, 'debug');
+            xhr = sinon.useFakeXMLHttpRequest();
+          });
 
-      it('should use https: protocol when https:', sinon.test(function() {
-        var spy = sinon.spy();
-        xhr.onCreate = spy;
+          afterEach(function() {
+            if (xhr.restore) xhr.restore();
+            if (segment.debug.restore) segment.debug.restore();
+          });
 
-        protocol('https:');
-        segment.enqueue('/i', { userId: 'id' });
+          it('should use https: protocol when http:', sinon.test(function() {
+            var spy = sinon.spy();
+            xhr.onCreate = spy;
 
-        assert(spy.calledOnce);
-        var req = spy.getCall(0).args[0];
-        assert.strictEqual(req.url, 'https://api.segment.io/v1/i');
-      }));
+            protocol('http:');
+            segment.enqueue('/i', { userId: 'id' });
 
-      it('should use https: protocol when https:', sinon.test(function() {
-        var spy = sinon.spy();
-        xhr.onCreate = spy;
+            assert(spy.calledOnce);
+            var req = spy.getCall(0).args[0];
+            assert.strictEqual(req.url, 'https://api.segment.io/v1/i');
+          }));
 
-        protocol('file:');
-        segment.enqueue('/i', { userId: 'id' });
+          it('should use https: protocol when https:', sinon.test(function() {
+            var spy = sinon.spy();
+            xhr.onCreate = spy;
 
-        assert(spy.calledOnce);
-        var req = spy.getCall(0).args[0];
-        assert.strictEqual(req.url, 'https://api.segment.io/v1/i');
-      }));
+            protocol('https:');
+            segment.enqueue('/i', { userId: 'id' });
 
-      it('should use https: protocol when chrome-extension:', sinon.test(function() {
-        var spy = sinon.spy();
-        xhr.onCreate = spy;
+            assert(spy.calledOnce);
+            var req = spy.getCall(0).args[0];
+            assert.strictEqual(req.url, 'https://api.segment.io/v1/i');
+          }));
 
-        protocol('chrome-extension:');
-        segment.enqueue('/i', { userId: 'id' });
+          it('should use https: protocol when https:', sinon.test(function() {
+            var spy = sinon.spy();
+            xhr.onCreate = spy;
 
-        assert(spy.calledOnce);
-        var req = spy.getCall(0).args[0];
-        assert.strictEqual(req.url, 'https://api.segment.io/v1/i');
-      }));
+            protocol('file:');
+            segment.enqueue('/i', { userId: 'id' });
 
-      it('should enqueue to `api.segment.io/v1` by default', sinon.test(function() {
-        var spy = sinon.spy();
-        xhr.onCreate = spy;
+            assert(spy.calledOnce);
+            var req = spy.getCall(0).args[0];
+            assert.strictEqual(req.url, 'https://api.segment.io/v1/i');
+          }));
 
-        protocol('https:');
-        segment.enqueue('/i', { userId: 'id' });
+          it('should use https: protocol when chrome-extension:', sinon.test(function() {
+            var spy = sinon.spy();
+            xhr.onCreate = spy;
 
-        assert(spy.calledOnce);
-        var req = spy.getCall(0).args[0];
-        assert.strictEqual(req.url, 'https://api.segment.io/v1/i');
-      }));
+            protocol('chrome-extension:');
+            segment.enqueue('/i', { userId: 'id' });
 
-      it('should enqueue to `options.apiHost` when set', sinon.test(function() {
-        segment.options.apiHost = 'api.example.com';
+            assert(spy.calledOnce);
+            var req = spy.getCall(0).args[0];
+            assert.strictEqual(req.url, 'https://api.segment.io/v1/i');
+          }));
 
-        var spy = sinon.spy();
-        xhr.onCreate = spy;
+          it('should enqueue to `api.segment.io/v1` by default', sinon.test(function() {
+            var spy = sinon.spy();
+            xhr.onCreate = spy;
 
-        protocol('https:');
-        segment.enqueue('/i', { userId: 'id' });
+            protocol('https:');
+            segment.enqueue('/i', { userId: 'id' });
 
-        assert(spy.calledOnce);
-        var req = spy.getCall(0).args[0];
-        assert.strictEqual(req.url, 'https://api.example.com/i');
-      }));
+            assert(spy.calledOnce);
+            var req = spy.getCall(0).args[0];
+            assert.strictEqual(req.url, 'https://api.segment.io/v1/i');
+          }));
 
-      it('should enqueue a normalized payload', sinon.test(function() {
-        var spy = sinon.spy();
-        xhr.onCreate = spy;
+          it('should enqueue to `options.apiHost` when set', sinon.test(function() {
+            segment.options.apiHost = 'api.example.com';
 
-        var payload = {
-          key1: 'value1',
-          key2: 'value2'
-        };
+            var spy = sinon.spy();
+            xhr.onCreate = spy;
 
-        segment.normalize = function() { return payload; };
+            protocol('https:');
+            segment.enqueue('/i', { userId: 'id' });
 
-        segment.enqueue('/i', {});
+            assert(spy.calledOnce);
+            var req = spy.getCall(0).args[0];
+            assert.strictEqual(req.url, 'https://api.example.com/i');
+          }));
 
-        assert(spy.calledOnce);
-        var req = spy.getCall(0).args[0];
-        assert.strictEqual(JSON.parse(req.requestBody).key1, 'value1');
-        assert.strictEqual(JSON.parse(req.requestBody).key2, 'value2');
-      }));
+          it('should enqueue a normalized payload', sinon.test(function() {
+            var spy = sinon.spy();
+            xhr.onCreate = spy;
 
-      it('should not log a normal payload', sinon.test(function() {
-        var spy = sinon.spy();
-        xhr.onCreate = spy;
+            var payload = {
+              key1: 'value1',
+              key2: 'value2'
+            };
 
-        var payload = {
-          key1: 'value1',
-          key2: 'value2'
-        };
+            segment.normalize = function() { return payload; };
 
-        segment.normalize = function() { return payload; };
+            segment.enqueue('/i', {});
 
-        segment.enqueue('/i', {});
+            assert(spy.calledOnce);
+            var req = spy.getCall(0).args[0];
+            assert.strictEqual(JSON.parse(req.requestBody).key1, 'value1');
+            assert.strictEqual(JSON.parse(req.requestBody).key2, 'value2');
+          }));
 
-        sinon.assert.neverCalledWith(segment.debug, 'message must be less than 32kb %O', payload);
+          it('should not log a normal payload', sinon.test(function() {
+            var spy = sinon.spy();
+            xhr.onCreate = spy;
 
-        assert(spy.calledOnce);
-        var req = spy.getCall(0).args[0];
-        assert.strictEqual(JSON.parse(req.requestBody).key1, 'value1');
-        assert.strictEqual(JSON.parse(req.requestBody).key2, 'value2');
-      }));
+            var payload = {
+              key1: 'value1',
+              key2: 'value2'
+            };
 
-      it('should enqueue an oversized payload', sinon.test(function() {
-        var spy = sinon.spy();
-        xhr.onCreate = spy;
+            segment.normalize = function() { return payload; };
 
-        var payload = {};
-        for (var i = 0; i < 1750; i++) {
-          payload['key' + i] = 'value' + i;
-        }
+            segment.enqueue('/i', {});
 
-        segment.normalize = function() { return payload; };
+            sinon.assert.neverCalledWith(segment.debug, 'message must be less than 32kb %O', payload);
 
-        segment.enqueue('/i', {});
+            assert(spy.calledOnce);
+            var req = spy.getCall(0).args[0];
+            assert.strictEqual(JSON.parse(req.requestBody).key1, 'value1');
+            assert.strictEqual(JSON.parse(req.requestBody).key2, 'value2');
+          }));
 
-        sinon.assert.calledWith(segment.debug, 'message must be less than 32kb %O', payload);
+          it('should enqueue an oversized payload', sinon.test(function() {
+            var spy = sinon.spy();
+            xhr.onCreate = spy;
 
-        assert(spy.calledOnce);
-        var req = spy.getCall(0).args[0];
-        assert.strictEqual(JSON.parse(req.requestBody).key1749, 'value1749');
-      }));
-    });
+            var payload = {};
+            for (var i = 0; i < 1750; i++) {
+              payload['key' + i] = 'value' + i;
+            }
 
-    // FIXME(ndhoule): See note at `isPhantomJS` definition
-    (isPhantomJS ? xdescribe : describe)('e2e tests — without queueing', function() {
-      beforeEach(function() {
-        segment.options.retryQueue = false;
-      });
+            segment.normalize = function() { return payload; };
 
-      describe('/g', function() {
-        it('should succeed', function(done) {
-          segment.enqueue('/g', { groupId: 'gid', userId: 'uid' }, function(err, res) {
-            if (err) return done(err);
-            analytics.assert(JSON.parse(res.responseText).success);
-            done();
+            segment.enqueue('/i', {});
+
+            sinon.assert.calledWith(segment.debug, 'message must be less than 32kb %O', payload);
+
+            assert(spy.calledOnce);
+            var req = spy.getCall(0).args[0];
+            assert.strictEqual(JSON.parse(req.requestBody).key1749, 'value1749');
+          }));
+        });
+
+        // FIXME(ndhoule): See note at `isPhantomJS` definition
+        (isPhantomJS ? xdescribe : describe)('e2e tests — without queueing', function() {
+          beforeEach(function() {
+            segment.options.retryQueue = false;
+          });
+
+          describe('/g', function() {
+            it('should succeed', function(done) {
+              segment.enqueue('/g', { groupId: 'gid', userId: 'uid' }, function(err, res) {
+                if (err) return done(err);
+                analytics.assert(JSON.parse(res.responseText).success);
+                done();
+              });
+            });
+          });
+
+          describe('/p', function() {
+            it('should succeed', function(done) {
+              var data = { userId: 'id', name: 'page', properties: {} };
+              segment.enqueue('/p', data, function(err, res) {
+                if (err) return done(err);
+                analytics.assert(JSON.parse(res.responseText).success);
+                done();
+              });
+            });
+          });
+
+          describe('/a', function() {
+            it('should succeed', function(done) {
+              var data = { userId: 'id', from: 'b', to: 'a' };
+              segment.enqueue('/a', data, function(err, res) {
+                if (err) return done(err);
+                analytics.assert(JSON.parse(res.responseText).success);
+                done();
+              });
+            });
+          });
+
+          describe('/t', function() {
+            it('should succeed', function(done) {
+              var data = { userId: 'id', event: 'my-event', properties: {} };
+
+              segment.enqueue('/t', data, function(err, res) {
+                if (err) return done(err);
+                analytics.assert(JSON.parse(res.responseText).success);
+                done();
+              });
+            });
+          });
+
+          describe('/i', function() {
+            it('should succeed', function(done) {
+              var data = { userId: 'id' };
+
+              segment.enqueue('/i', data, function(err, res) {
+                if (err) return done(err);
+                analytics.assert(JSON.parse(res.responseText).success);
+                done();
+              });
+            });
+          });
+        });
+
+        (isPhantomJS ? xdescribe : describe)('e2e tests — with queueing', function() {
+          beforeEach(function() {
+            segment.options.retryQueue = true;
+            analytics.initialize();
+          });
+
+          describe('/g', function() {
+            it('should succeed', function(done) {
+              segment._lsqueue.on('processed', function(err, res) {
+                if (err) return done(err);
+                analytics.assert(JSON.parse(res.responseText).success);
+                done();
+              });
+              segment.enqueue('/g', { groupId: 'gid', userId: 'uid' });
+            });
+          });
+
+          describe('/p', function() {
+            it('should succeed', function(done) {
+              segment._lsqueue.on('processed', function(err, res) {
+                if (err) return done(err);
+                analytics.assert(JSON.parse(res.responseText).success);
+                done();
+              });
+              segment.enqueue('/p', { userId: 'id', name: 'page', properties: {} });
+            });
+          });
+
+          describe('/a', function() {
+            it('should succeed', function(done) {
+              segment._lsqueue.on('processed', function(err, res) {
+                if (err) return done(err);
+                analytics.assert(JSON.parse(res.responseText).success);
+                done();
+              });
+              segment.enqueue('/a', { userId: 'id', from: 'b', to: 'a' });
+            });
+          });
+
+          describe('/t', function() {
+            it('should succeed', function(done) {
+              segment._lsqueue.on('processed', function(err, res) {
+                if (err) return done(err);
+                analytics.assert(JSON.parse(res.responseText).success);
+                done();
+              });
+              segment.enqueue('/t', { userId: 'id', event: 'my-event', properties: {} });
+            });
+          });
+
+          describe('/i', function() {
+            it('should succeed', function(done) {
+              segment._lsqueue.on('processed', function(err, res) {
+                if (err) return done(err);
+                analytics.assert(JSON.parse(res.responseText).success);
+                done();
+              });
+              segment.enqueue('/i', { userId: 'id' });
+            });
+          });
+        });
+
+        describe('#cookie', function() {
+          beforeEach(function() {
+            segment.cookie('foo', null);
+          });
+
+          it('should persist the cookie even when the hostname is "dev"', function() {
+            Segment.global = { navigator: {}, location: {} };
+            Segment.global.location.href = 'https://dev:300/path';
+            analytics.assert(segment.cookie('foo') == null);
+            segment.cookie('foo', 'bar');
+            analytics.assert(segment.cookie('foo') === 'bar');
+            Segment.global = window;
+          });
+
+          it('should persist the cookie even when the hostname is "127.0.0.1"', function() {
+            Segment.global = { navigator: {}, location: {} };
+            Segment.global.location.href = 'http://127.0.0.1:3000/';
+            analytics.assert(segment.cookie('foo') == null);
+            segment.cookie('foo', 'bar');
+            analytics.assert(segment.cookie('foo') === 'bar');
+            Segment.global = window;
+          });
+
+          it('should persist the cookie even when the hostname is "app.herokuapp.com"', function() {
+            Segment.global = { navigator: {}, location: {} };
+            Segment.global.location.href = 'https://app.herokuapp.com/about';
+            Segment.global.location.hostname = 'app.herokuapp.com';
+            analytics.assert(segment.cookie('foo') == null);
+            segment.cookie('foo', 'bar');
+            analytics.assert(segment.cookie('foo') === 'bar');
+            Segment.global = window;
+          });
+        });
+
+        describe('#crossDomainId', function() {
+          var server;
+
+          beforeEach(function() {
+            server = sinon.fakeServer.create();
+            segment.options.crossDomainIdServers = [
+              'userdata.example1.com',
+              'xid.domain2.com',
+              'localhost'
+            ];
+            analytics.stub(segment, 'onidentify');
+          });
+
+          afterEach(function() {
+            server.restore();
+          });
+
+          it('should migrate cookies from old to new name', function() {
+            segment.cookie('segment_cross_domain_id', 'xid-test-1');
+            segment.initialize();
+
+            analytics.assert(segment.cookie('segment_cross_domain_id') == null);
+            analytics.assert(segment.cookie('seg_xid') === 'xid-test-1');
+          });
+
+          it('should not crash with invalid config', function() {
+            segment.options.crossDomainIdServers = undefined;
+
+            var res = null;
+            var err = null;
+            segment.retrieveCrossDomainId(function(error, response) {
+              res = response;
+              err = error;
+            });
+
+            analytics.assert(!res);
+            analytics.assert(err === 'crossDomainId not enabled');
+          });
+
+          it('should generate xid locally if there is only one (current hostname) server', function() {
+            segment.options.crossDomainIdServers = [
+              'localhost'
+            ];
+
+            var res = null;
+            segment.retrieveCrossDomainId(function(err, response) {
+              res = response;
+            });
+
+            var identify = segment.onidentify.args[0];
+            var crossDomainId = identify[0].traits().crossDomainId;
+            analytics.assert(crossDomainId);
+
+            analytics.assert(res.crossDomainId === crossDomainId);
+            analytics.assert(res.fromDomain === 'localhost');
+          });
+
+          it('should obtain crossDomainId', function() {
+            var res = null;
+            segment.retrieveCrossDomainId(function(err, response) {
+              res = response;
+            });
+            server.respondWith('GET', 'https://xid.domain2.com/v1/id/' + segment.options.apiKey, [
+              200,
+              { 'Content-Type': 'application/json' },
+              '{ "id": "xdomain-id-1" }'
+            ]);
+            server.respond();
+
+            var identify = segment.onidentify.args[0];
+            analytics.assert(identify[0].traits().crossDomainId === 'xdomain-id-1');
+
+            analytics.assert(res.crossDomainId === 'xdomain-id-1');
+            analytics.assert(res.fromDomain === 'xid.domain2.com');
+          });
+
+          it('should generate crossDomainId if no server has it', function() {
+            var res = null;
+            segment.retrieveCrossDomainId(function(err, response) {
+              res = response;
+            });
+
+            server.respondWith('GET', 'https://xid.domain2.com/v1/id/' + segment.options.apiKey, [
+              200,
+              { 'Content-Type': 'application/json' },
+              '{ "id": null }'
+            ]);
+            server.respondWith('GET', 'https://userdata.example1.com/v1/id/' + segment.options.apiKey, [
+              200,
+              { 'Content-Type': 'application/json' },
+              '{ "id": null }'
+            ]);
+            server.respond();
+
+            var identify = segment.onidentify.args[0];
+            var crossDomainId = identify[0].traits().crossDomainId;
+            analytics.assert(crossDomainId);
+
+            analytics.assert(res.crossDomainId === crossDomainId);
+            analytics.assert(res.fromDomain === 'localhost');
+          });
+
+          it('should bail if all servers error', function() {
+            var err = null;
+            var res = null;
+            segment.retrieveCrossDomainId(function(error, response) {
+              err = error;
+              res = response;
+            });
+
+            server.respondWith('GET', 'https://xid.domain2.com/v1/id/' + segment.options.apiKey, [
+              500,
+              { 'Content-Type': 'application/json' },
+              ''
+            ]);
+            server.respondWith('GET', 'https://userdata.example1.com/v1/id/' + segment.options.apiKey, [
+              500,
+              { 'Content-Type': 'application/json' },
+              ''
+            ]);
+            server.respond();
+
+            var identify = segment.onidentify.args[0];
+            analytics.assert(!identify);
+            analytics.assert(!res);
+            analytics.assert(err === 'Internal Server Error');
+          });
+
+          it('should bail if some servers fail and others have no xid', function() {
+            var err = null;
+            var res = null;
+            segment.retrieveCrossDomainId(function(error, response) {
+              err = error;
+              res = response;
+            });
+
+            server.respondWith('GET', 'https://xid.domain2.com/v1/id/' + segment.options.apiKey, [
+              400,
+              { 'Content-Type': 'application/json' },
+              ''
+            ]);
+            server.respondWith('GET', 'https://userdata.example1.com/v1/id/' + segment.options.apiKey, [
+              200,
+              { 'Content-Type': 'application/json' },
+              '{ "id": null }'
+            ]);
+            server.respond();
+
+            var identify = segment.onidentify.args[0];
+            analytics.assert(!identify);
+            analytics.assert(!res);
+            analytics.assert(err === 'Bad Request');
+          });
+
+          it('should succeed even if one server fails', function() {
+            var err = null;
+            var res = null;
+            segment.retrieveCrossDomainId(function(error, response) {
+              err = error;
+              res = response;
+            });
+
+            server.respondWith('GET', 'https://xid.domain2.com/v1/id/' + segment.options.apiKey, [
+              500,
+              { 'Content-Type': 'application/json' },
+              ''
+            ]);
+            server.respondWith('GET', 'https://userdata.example1.com/v1/id/' + segment.options.apiKey, [
+              200,
+              { 'Content-Type': 'application/json' },
+              '{ "id": "xidxid" }'
+            ]);
+            server.respond();
+
+            var identify = segment.onidentify.args[0];
+            analytics.assert(identify[0].traits().crossDomainId === 'xidxid');
+
+            analytics.assert(res.crossDomainId === 'xidxid');
+            analytics.assert(res.fromDomain === 'userdata.example1.com');
+            analytics.assert(!err);
           });
         });
       });
-
-      describe('/p', function() {
-        it('should succeed', function(done) {
-          var data = { userId: 'id', name: 'page', properties: {} };
-          segment.enqueue('/p', data, function(err, res) {
-            if (err) return done(err);
-            analytics.assert(JSON.parse(res.responseText).success);
-            done();
-          });
-        });
-      });
-
-      describe('/a', function() {
-        it('should succeed', function(done) {
-          var data = { userId: 'id', from: 'b', to: 'a' };
-          segment.enqueue('/a', data, function(err, res) {
-            if (err) return done(err);
-            analytics.assert(JSON.parse(res.responseText).success);
-            done();
-          });
-        });
-      });
-
-      describe('/t', function() {
-        it('should succeed', function(done) {
-          var data = { userId: 'id', event: 'my-event', properties: {} };
-
-          segment.enqueue('/t', data, function(err, res) {
-            if (err) return done(err);
-            analytics.assert(JSON.parse(res.responseText).success);
-            done();
-          });
-        });
-      });
-
-      describe('/i', function() {
-        it('should succeed', function(done) {
-          var data = { userId: 'id' };
-
-          segment.enqueue('/i', data, function(err, res) {
-            if (err) return done(err);
-            analytics.assert(JSON.parse(res.responseText).success);
-            done();
-          });
-        });
-      });
-    });
-
-    (isPhantomJS ? xdescribe : describe)('e2e tests — with queueing', function() {
-      beforeEach(function() {
-        segment.options.retryQueue = true;
-        analytics.initialize();
-      });
-
-      describe('/g', function() {
-        it('should succeed', function(done) {
-          segment._lsqueue.on('processed', function(err, res) {
-            if (err) return done(err);
-            analytics.assert(JSON.parse(res.responseText).success);
-            done();
-          });
-          segment.enqueue('/g', { groupId: 'gid', userId: 'uid' });
-        });
-      });
-
-      describe('/p', function() {
-        it('should succeed', function(done) {
-          segment._lsqueue.on('processed', function(err, res) {
-            if (err) return done(err);
-            analytics.assert(JSON.parse(res.responseText).success);
-            done();
-          });
-          segment.enqueue('/p', { userId: 'id', name: 'page', properties: {} });
-        });
-      });
-
-      describe('/a', function() {
-        it('should succeed', function(done) {
-          segment._lsqueue.on('processed', function(err, res) {
-            if (err) return done(err);
-            analytics.assert(JSON.parse(res.responseText).success);
-            done();
-          });
-          segment.enqueue('/a', { userId: 'id', from: 'b', to: 'a' });
-        });
-      });
-
-      describe('/t', function() {
-        it('should succeed', function(done) {
-          segment._lsqueue.on('processed', function(err, res) {
-            if (err) return done(err);
-            analytics.assert(JSON.parse(res.responseText).success);
-            done();
-          });
-          segment.enqueue('/t', { userId: 'id', event: 'my-event', properties: {} });
-        });
-      });
-
-      describe('/i', function() {
-        it('should succeed', function(done) {
-          segment._lsqueue.on('processed', function(err, res) {
-            if (err) return done(err);
-            analytics.assert(JSON.parse(res.responseText).success);
-            done();
-          });
-          segment.enqueue('/i', { userId: 'id' });
-        });
-      });
-    });
-
-    describe('#cookie', function() {
-      beforeEach(function() {
-        segment.cookie('foo', null);
-      });
-
-      it('should persist the cookie even when the hostname is "dev"', function() {
-        Segment.global = { navigator: {}, location: {} };
-        Segment.global.location.href = 'https://dev:300/path';
-        analytics.assert(segment.cookie('foo') == null);
-        segment.cookie('foo', 'bar');
-        analytics.assert(segment.cookie('foo') === 'bar');
-        Segment.global = window;
-      });
-
-      it('should persist the cookie even when the hostname is "127.0.0.1"', function() {
-        Segment.global = { navigator: {}, location: {} };
-        Segment.global.location.href = 'http://127.0.0.1:3000/';
-        analytics.assert(segment.cookie('foo') == null);
-        segment.cookie('foo', 'bar');
-        analytics.assert(segment.cookie('foo') === 'bar');
-        Segment.global = window;
-      });
-
-      it('should persist the cookie even when the hostname is "app.herokuapp.com"', function() {
-        Segment.global = { navigator: {}, location: {} };
-        Segment.global.location.href = 'https://app.herokuapp.com/about';
-        Segment.global.location.hostname = 'app.herokuapp.com';
-        analytics.assert(segment.cookie('foo') == null);
-        segment.cookie('foo', 'bar');
-        analytics.assert(segment.cookie('foo') === 'bar');
-        Segment.global = window;
-      });
-    });
-
-    describe('#crossDomainId', function() {
-      var server;
-
-      beforeEach(function() {
-        server = sinon.fakeServer.create();
-        segment.options.crossDomainIdServers = [
-          'userdata.example1.com',
-          'xid.domain2.com',
-          'localhost'
-        ];
-        analytics.stub(segment, 'onidentify');
-      });
-
-      afterEach(function() {
-        server.restore();
-      });
-
-      it('should migrate cookies from old to new name', function() {
-        segment.cookie('segment_cross_domain_id', 'xid-test-1');
-        segment.initialize();
-
-        analytics.assert(segment.cookie('segment_cross_domain_id') == null);
-        analytics.assert(segment.cookie('seg_xid') === 'xid-test-1');
-      });
-
-      it('should not crash with invalid config', function() {
-        segment.options.crossDomainIdServers = undefined;
-
-        var res = null;
-        var err = null;
-        segment.retrieveCrossDomainId(function(error, response) {
-          res = response;
-          err = error;
-        });
-
-        analytics.assert(!res);
-        analytics.assert(err === 'crossDomainId not enabled');
-      });
-
-      it('should generate xid locally if there is only one (current hostname) server', function() {
-        segment.options.crossDomainIdServers = [
-          'localhost'
-        ];
-
-        var res = null;
-        segment.retrieveCrossDomainId(function(err, response) {
-          res = response;
-        });
-
-        var identify = segment.onidentify.args[0];
-        var crossDomainId = identify[0].traits().crossDomainId;
-        analytics.assert(crossDomainId);
-
-        analytics.assert(res.crossDomainId === crossDomainId);
-        analytics.assert(res.fromDomain === 'localhost');
-      });
-
-      it('should obtain crossDomainId', function() {
-        var res = null;
-        segment.retrieveCrossDomainId(function(err, response) {
-          res = response;
-        });
-        server.respondWith('GET', 'https://xid.domain2.com/v1/id/' + segment.options.apiKey, [
-          200,
-          { 'Content-Type': 'application/json' },
-          '{ "id": "xdomain-id-1" }'
-        ]);
-        server.respond();
-
-        var identify = segment.onidentify.args[0];
-        analytics.assert(identify[0].traits().crossDomainId === 'xdomain-id-1');
-
-        analytics.assert(res.crossDomainId === 'xdomain-id-1');
-        analytics.assert(res.fromDomain === 'xid.domain2.com');
-      });
-
-      it('should generate crossDomainId if no server has it', function() {
-        var res = null;
-        segment.retrieveCrossDomainId(function(err, response) {
-          res = response;
-        });
-
-        server.respondWith('GET', 'https://xid.domain2.com/v1/id/' + segment.options.apiKey, [
-          200,
-          { 'Content-Type': 'application/json' },
-          '{ "id": null }'
-        ]);
-        server.respondWith('GET', 'https://userdata.example1.com/v1/id/' + segment.options.apiKey, [
-          200,
-          { 'Content-Type': 'application/json' },
-          '{ "id": null }'
-        ]);
-        server.respond();
-
-        var identify = segment.onidentify.args[0];
-        var crossDomainId = identify[0].traits().crossDomainId;
-        analytics.assert(crossDomainId);
-
-        analytics.assert(res.crossDomainId === crossDomainId);
-        analytics.assert(res.fromDomain === 'localhost');
-      });
-
-      it('should bail if all servers error', function() {
-        var err = null;
-        var res = null;
-        segment.retrieveCrossDomainId(function(error, response) {
-          err = error;
-          res = response;
-        });
-
-        server.respondWith('GET', 'https://xid.domain2.com/v1/id/' + segment.options.apiKey, [
-          500,
-          { 'Content-Type': 'application/json' },
-          ''
-        ]);
-        server.respondWith('GET', 'https://userdata.example1.com/v1/id/' + segment.options.apiKey, [
-          500,
-          { 'Content-Type': 'application/json' },
-          ''
-        ]);
-        server.respond();
-
-        var identify = segment.onidentify.args[0];
-        analytics.assert(!identify);
-        analytics.assert(!res);
-        analytics.assert(err === 'Internal Server Error');
-      });
-
-      it('should bail if some servers fail and others have no xid', function() {
-        var err = null;
-        var res = null;
-        segment.retrieveCrossDomainId(function(error, response) {
-          err = error;
-          res = response;
-        });
-
-        server.respondWith('GET', 'https://xid.domain2.com/v1/id/' + segment.options.apiKey, [
-          400,
-          { 'Content-Type': 'application/json' },
-          ''
-        ]);
-        server.respondWith('GET', 'https://userdata.example1.com/v1/id/' + segment.options.apiKey, [
-          200,
-          { 'Content-Type': 'application/json' },
-          '{ "id": null }'
-        ]);
-        server.respond();
-
-        var identify = segment.onidentify.args[0];
-        analytics.assert(!identify);
-        analytics.assert(!res);
-        analytics.assert(err === 'Bad Request');
-      });
-
-      it('should succeed even if one server fails', function() {
-        var err = null;
-        var res = null;
-        segment.retrieveCrossDomainId(function(error, response) {
-          err = error;
-          res = response;
-        });
-
-        server.respondWith('GET', 'https://xid.domain2.com/v1/id/' + segment.options.apiKey, [
-          500,
-          { 'Content-Type': 'application/json' },
-          ''
-        ]);
-        server.respondWith('GET', 'https://userdata.example1.com/v1/id/' + segment.options.apiKey, [
-          200,
-          { 'Content-Type': 'application/json' },
-          '{ "id": "xidxid" }'
-        ]);
-        server.respond();
-
-        var identify = segment.onidentify.args[0];
-        analytics.assert(identify[0].traits().crossDomainId === 'xidxid');
-
-        analytics.assert(res.crossDomainId === 'xidxid');
-        analytics.assert(res.fromDomain === 'userdata.example1.com');
-        analytics.assert(!err);
-      });
-    });
+    }
   });
 
   describe('localStorage queueing', function() {
@@ -1026,7 +1049,7 @@ describe('Segment.io', function() {
 
       Schedule.setClock(clock);
       xhr.onCreate = spy;
-      
+
       segment.enqueue('/i', { userId: '1' });
       assert(spy.calledOnce);
 
@@ -1064,7 +1087,7 @@ describe('Segment.io', function() {
       Segment.sendJsonWithTimeout(url, [1, 2, 3], headers, 1, function(err) {
         assert(err.type === 'timeout');
         done();
-      }); 
+      });
     });
 
     describe('error handling', function() {
@@ -1085,7 +1108,7 @@ describe('Segment.io', function() {
       [429, 500, 503].forEach(function(code) {
         it('should throw on ' + code + ' HTTP errors', function(done) {
           if (send.type !== 'xhr') return done();
-  
+
           Segment.sendJsonWithTimeout(url + '/null', [1, 2, 3], headers, 10 * 1000, function(err) {
             assert(RegExp('^HTTP Error ' + code + ' (.+)$').test(err.message));
             done();
@@ -1098,7 +1121,7 @@ describe('Segment.io', function() {
       [200, 204, 300, 302, 400, 404].forEach(function(code) {
         it('should not throw on ' + code + ' HTTP errors', function(done) {
           if (send.type !== 'xhr') return done();
-  
+
           Segment.sendJsonWithTimeout(url + '/null', [1, 2, 3], headers, 10 * 1000, done);
 
           req.respond(code, null, 'ok');
