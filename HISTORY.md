@@ -1,4 +1,9 @@
 
+3.8.0 / 2018-10-05
+==================
+
+  * [Improvement](https://github.com/segment-integrations/analytics.js-integration-segmentio/pull/49): Enable retryQueue by default.
+
 3.7.0 / 2018-28-08
 ==================
 
