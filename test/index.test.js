@@ -395,9 +395,10 @@ describe('Segment.io', function() {
     };
 
     for (var scenario in cases) {
-      if (cases.hasOwnProperty(scenario)) {
+      if (!cases.hasOwnProperty(scenario)) {
         continue;
       }
+
       describe('with ' + scenario, function() {
         beforeEach(function() {
           segment.options.retryQueue = cases[scenario];
