@@ -839,14 +839,6 @@ describe('Segment.io', function() {
             server.restore();
           });
 
-          it('should migrate cookies from old to new name', function() {
-            segment.cookie('segment_cross_domain_id', 'xid-test-1');
-            segment.initialize();
-
-            analytics.assert(segment.cookie('segment_cross_domain_id') == null);
-            analytics.assert(segment.cookie('seg_xid') === 'xid-test-1');
-          });
-
           it('should not crash with invalid config', function() {
             segment.options.crossDomainIdServers = undefined;
 
@@ -887,7 +879,7 @@ describe('Segment.io', function() {
             server.respondWith('GET', 'https://xid.domain2.com/v1/id/' + segment.options.apiKey, [
               200,
               { 'Content-Type': 'application/json' },
-              '{ "id": "xdomain-id-1" }'
+              '{ "id": "xdomain-id-1", "timestamp": 1540432000000 }'
             ]);
             server.respond();
 
@@ -896,6 +888,7 @@ describe('Segment.io', function() {
 
             analytics.assert(res.crossDomainId === 'xdomain-id-1');
             analytics.assert(res.fromDomain === 'xid.domain2.com');
+            analytics.assert.equal(res.timestamp, 1540432000000);
           });
 
           it('should generate crossDomainId if no server has it', function() {
@@ -922,6 +915,7 @@ describe('Segment.io', function() {
 
             analytics.assert(res.crossDomainId === crossDomainId);
             analytics.assert(res.fromDomain === 'localhost');
+            analytics.assert.notEqual(res.timestamp, null);
           });
 
           it('should bail if all servers error', function() {
