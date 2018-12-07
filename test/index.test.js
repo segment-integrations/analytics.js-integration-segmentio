@@ -316,6 +316,58 @@ describe('Segment.io', function() {
         analytics.assert(!object.context.amp);
       });
 
+      it('should set xid if available, is enabled, and context.traits is not defined', function() {
+        segment.cookie('seg_xid', 'test_id');
+        segment.options.crossDomainIdServers = [
+          'userdata.example1.com',
+          'xid.domain2.com',
+          'localhost'
+        ];
+
+        segment.normalize(object);
+        assert.equal(object.context.traits.crossDomainId, 'test_id');
+      });
+
+      it('should set xid if available, is enabled, and context.traits is defined', function() {
+        segment.cookie('seg_xid', 'test_id');
+        segment.options.crossDomainIdServers = [
+          'userdata.example1.com',
+          'xid.domain2.com',
+          'localhost'
+        ];
+
+        var msg = { context: { traits: { email: 'prateek@segment.com' } } };
+        segment.normalize(msg);
+        assert.equal(msg.context.traits.crossDomainId, 'test_id');
+      });
+
+      it('should not set xid if available, and is disabled', function() {
+        segment.cookie('seg_xid', 'test_id');
+        segment.options.crossDomainIdServers = [];
+
+        segment.normalize(object);
+
+        // context.traits will not be set, which implicitly verifies that
+        // context.traits.crossDomainId is not set.
+        assert.equal(object.context.traits, undefined);
+      });
+
+      it('should not set xid if not available, and context.traits is not defined', function() {
+        segment.cookie('seg_xid', null);
+        segment.normalize(object);
+        // context.traits will not be set, which implicitly verifies that
+        // context.traits.crossDomainId is not set.
+        assert.equal(object.context.traits, undefined);
+      });
+
+      it('should not set xid if not available and context.traits is defined', function() {
+        segment.cookie('seg_xid', null);
+
+        var msg = { context: { traits: { email: 'prateek@segment.com' } } };
+        segment.normalize(msg);
+        assert.equal(msg.context.traits.crossDomainId, undefined);
+      });
+
       describe('failed initializations', function() {
         it('should add failedInitializations as part of _metadata object if this.analytics.failedInitilizations is not empty', function() {
           var spy = sinon.spy(segment, 'normalize');
@@ -1002,6 +1054,38 @@ describe('Segment.io', function() {
             analytics.assert(res.crossDomainId === 'xidxid');
             analytics.assert(res.fromDomain === 'userdata.example1.com');
             analytics.assert(!err);
+          });
+
+          describe('isCrossDomainAnalyticsEnabled', function() {
+            it('should return false when crossDomainIdServers is undefined', function() {
+              segment.options.crossDomainIdServers = undefined;
+
+              assert.equal(segment.isCrossDomainAnalyticsEnabled(), false);
+            });
+
+            it('should return false when crossDomainIdServers is empty', function() {
+              segment.options.crossDomainIdServers = [];
+
+              assert.equal(segment.isCrossDomainAnalyticsEnabled(), false);
+            });
+
+            it('should return true when crossDomainIdServers is set', function() {
+              segment.options.crossDomainIdServers = [
+                'userdata.example1.com',
+                'xid.domain2.com',
+                'localhost'
+              ];
+
+              assert.equal(segment.isCrossDomainAnalyticsEnabled(), true);
+            });
+
+            it('should return true even when crossDomainIdServers is set with 1 server', function() {
+              segment.options.crossDomainIdServers = [
+                'localhost'
+              ];
+
+              assert.equal(segment.isCrossDomainAnalyticsEnabled(), true);
+            });
           });
         });
       });
