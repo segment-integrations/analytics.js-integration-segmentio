@@ -1,7 +1,7 @@
 {
   "name": "@segment/analytics.js-integration-segmentio",
   "description": "The Segmentio analytics.js integration.",
-  "version": "3.8.0",
+  "version": "3.8.1",
   "keywords": [
     "analytics.js",
     "analytics.js-integration",
