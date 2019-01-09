@@ -1095,7 +1095,7 @@ describe('Segment.io', function() {
                 crossDomainId: 'test_xid'
               });
 
-              segment.deleteCrossDomainId();
+              segment.deleteCrossDomainIdIfNeeded();
 
               assert.equal(segment.cookie('seg_xid'), 'test_xid');
               assert.equal(analytics.user().traits().crossDomainId, 'test_xid');
@@ -1109,7 +1109,7 @@ describe('Segment.io', function() {
                 crossDomainId: 'test_xid'
               });
 
-              segment.deleteCrossDomainId();
+              segment.deleteCrossDomainIdIfNeeded();
 
               assert.equal(segment.cookie('seg_xid'), 'test_xid');
               assert.equal(analytics.user().traits().crossDomainId, 'test_xid');
@@ -1123,7 +1123,7 @@ describe('Segment.io', function() {
                 crossDomainId: 'test_xid'
               });
 
-              segment.deleteCrossDomainId();
+              segment.deleteCrossDomainIdIfNeeded();
 
               assert.equal(segment.cookie('seg_xid'), null);
               assert.equal(analytics.user().traits().crossDomainId, null);
@@ -1138,7 +1138,7 @@ describe('Segment.io', function() {
                 age: 26
               });
 
-              segment.deleteCrossDomainId();
+              segment.deleteCrossDomainIdIfNeeded();
 
               assert.deepEqual(analytics.user().traits(), {
                 name: 'Prateek',
