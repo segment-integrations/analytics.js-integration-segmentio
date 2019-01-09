@@ -1087,6 +1087,65 @@ describe('Segment.io', function() {
               assert.equal(segment.isCrossDomainAnalyticsEnabled(), true);
             });
           });
+
+          describe('deleteCrossDomainId', function() {
+            it('should not delete cross domain identifiers by default', function() {
+              segment.cookie('seg_xid', 'test_xid');
+              analytics.identify({
+                crossDomainId: 'test_xid'
+              });
+
+              segment.deleteCrossDomainId();
+
+              assert.equal(segment.cookie('seg_xid'), 'test_xid');
+              assert.equal(analytics.user().traits().crossDomainId, 'test_xid');
+            });
+
+            it('should do not delete cross domain identifiers if disabled', function() {
+              segment.options.deleteCrossDomainId = false;
+
+              segment.cookie('seg_xid', 'test_xid');
+              analytics.identify({
+                crossDomainId: 'test_xid'
+              });
+
+              segment.deleteCrossDomainId();
+
+              assert.equal(segment.cookie('seg_xid'), 'test_xid');
+              assert.equal(analytics.user().traits().crossDomainId, 'test_xid');
+            });
+
+            it('should delete cross domain identifiers if enabled', function() {
+              segment.options.deleteCrossDomainId = true;
+
+              segment.cookie('seg_xid', 'test_xid');
+              analytics.identify({
+                crossDomainId: 'test_xid'
+              });
+
+              segment.deleteCrossDomainId();
+
+              assert.equal(segment.cookie('seg_xid'), null);
+              assert.equal(analytics.user().traits().crossDomainId, null);
+            });
+
+            it('should not delete any other traits if enabled', function() {
+              segment.options.deleteCrossDomainId = true;
+
+              analytics.identify({
+                crossDomainId: 'test_xid',
+                name: 'Prateek',
+                age: 26
+              });
+
+              segment.deleteCrossDomainId();
+
+              assert.deepEqual(analytics.user().traits(), {
+                name: 'Prateek',
+                age: 26
+              });
+            });
+          });
         });
       });
     }
