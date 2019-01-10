@@ -1091,6 +1091,8 @@ describe('Segment.io', function() {
           describe('deleteCrossDomainId', function() {
             it('should not delete cross domain identifiers by default', function() {
               segment.cookie('seg_xid', 'test_xid');
+              segment.cookie('seg_xid_ts', 'test_xid_ts');
+              segment.cookie('seg_xid_fd', 'test_xid_fd');
               analytics.identify({
                 crossDomainId: 'test_xid'
               });
@@ -1098,6 +1100,8 @@ describe('Segment.io', function() {
               segment.deleteCrossDomainIdIfNeeded();
 
               assert.equal(segment.cookie('seg_xid'), 'test_xid');
+              assert.equal(segment.cookie('seg_xid_ts'), 'test_xid_ts');
+              assert.equal(segment.cookie('seg_xid_fd'), 'test_xid_fd');
               assert.equal(analytics.user().traits().crossDomainId, 'test_xid');
             });
 
@@ -1105,6 +1109,8 @@ describe('Segment.io', function() {
               segment.options.deleteCrossDomainId = false;
 
               segment.cookie('seg_xid', 'test_xid');
+              segment.cookie('seg_xid_ts', 'test_xid_ts');
+              segment.cookie('seg_xid_fd', 'test_xid_fd');
               analytics.identify({
                 crossDomainId: 'test_xid'
               });
@@ -1112,6 +1118,8 @@ describe('Segment.io', function() {
               segment.deleteCrossDomainIdIfNeeded();
 
               assert.equal(segment.cookie('seg_xid'), 'test_xid');
+              assert.equal(segment.cookie('seg_xid_ts'), 'test_xid_ts');
+              assert.equal(segment.cookie('seg_xid_fd'), 'test_xid_fd');
               assert.equal(analytics.user().traits().crossDomainId, 'test_xid');
             });
 
@@ -1119,6 +1127,8 @@ describe('Segment.io', function() {
               segment.options.deleteCrossDomainId = true;
 
               segment.cookie('seg_xid', 'test_xid');
+              segment.cookie('seg_xid_ts', 'test_xid_ts');
+              segment.cookie('seg_xid_fd', 'test_xid_fd');
               analytics.identify({
                 crossDomainId: 'test_xid'
               });
@@ -1126,7 +1136,33 @@ describe('Segment.io', function() {
               segment.deleteCrossDomainIdIfNeeded();
 
               assert.equal(segment.cookie('seg_xid'), null);
+              assert.equal(segment.cookie('seg_xid_ts'), null);
+              assert.equal(segment.cookie('seg_xid_fd'), null);
               assert.equal(analytics.user().traits().crossDomainId, null);
+            });
+
+            it('should delete localStorage trait even if only traits exists', function() {
+              segment.options.deleteCrossDomainId = true;
+
+              analytics.identify({
+                crossDomainId: 'test_xid'
+              });
+
+              segment.deleteCrossDomainIdIfNeeded();
+
+              assert.equal(analytics.user().traits().crossDomainId, null);
+            });
+
+            it('should delete xid cookie even if only cookie exists', function() {
+              segment.options.deleteCrossDomainId = true;
+
+              segment.cookie('seg_xid', 'test_xid');
+
+              segment.deleteCrossDomainIdIfNeeded();
+
+              assert.equal(segment.cookie('seg_xid'), null);
+              assert.equal(segment.cookie('seg_xid_ts'), null);
+              assert.equal(segment.cookie('seg_xid_fd'), null);
             });
 
             it('should not delete any other traits if enabled', function() {
