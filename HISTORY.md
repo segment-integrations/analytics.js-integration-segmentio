@@ -1,4 +1,9 @@
 
+3.9.0 / 2019-01-14
+==================
+
+  * [New](https://github.com/segment-integrations/analytics.js-integration-segmentio/pull/54): Add flag and logic to delete cross domain identifiers.
+
 3.8.1 / 2018-12-09
 ==================
 
