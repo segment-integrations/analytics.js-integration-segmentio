@@ -175,21 +175,6 @@ describe('Segment.io', function() {
         analytics.assert(object.writeKey === segment.options.apiKey);
       });
 
-      it('should add .messageId', function() {
-        segment.normalize(object);
-        analytics.assert(object.messageId.length === 36);
-      });
-
-      it('should properly randomize .messageId', function() {
-        var set = {};
-        var count = 1000;
-        for (var i = 0; i < count; i++) {
-          var id = segment.normalize(object).messageId;
-          set[id] = true;
-        }
-        analytics.assert(Object.keys(set).length === count);
-      });
-
       it('should add .library', function() {
         segment.normalize(object);
         analytics.assert(object.context.library);
@@ -424,6 +409,13 @@ describe('Segment.io', function() {
           assert(object);
           assert(!object._metadata);
         });
+      });
+
+      it('should pick up messageId from AJS', function() {
+        object = analytics.normalize(object);  // ajs core generates the message ID here
+        var messageId = object.messageId;
+        segment.normalize(object);
+        assert.equal(object.messageId, messageId);
       });
     });
   });
