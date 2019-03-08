@@ -412,10 +412,10 @@ describe('Segment.io', function() {
       });
 
       it('should pick up messageId from AJS', function() {
-        object = analytics.normalize(object)  // ajs core generates the message ID here
-        var messageId = object.messageId
-        segment.normalize(object)
-        assert.equal(object.messageId, messageId)
+        object = analytics.normalize(object);  // ajs core generates the message ID here
+        var messageId = object.messageId;
+        segment.normalize(object);
+        assert.equal(object.messageId, messageId);
       });
     });
   });
