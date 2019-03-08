@@ -1,4 +1,9 @@
 
+4.0.0 / 2019-03-08
+==================
+
+  * [New](https://github.com/segment-integrations/analytics.js-integration-segmentio/pull/55): Stop Generating MessageId.
+
 3.9.0 / 2019-01-14
 ==================
 
