@@ -10,7 +10,10 @@
   ],
   "main": "lib/index.js",
   "scripts": {
-    "test": "make test"
+    "test": "make test",
+    "np": "np --no-publish",
+    "cz": "git-cz",
+    "commitmsg": "commitlint -E GIT_PARAMS"
   },
   "repository": {
     "type": "git",
@@ -40,12 +43,18 @@
     "yields-store": "^1.0.2"
   },
   "devDependencies": {
+    "@commitlint/cli": "^8.0.0",
+    "@commitlint/config-conventional": "^8.0.0",
     "@segment/analytics.js-core": "^3.8.0",
     "@segment/analytics.js-integration-tester": "^2.0.0",
     "@segment/clear-env": "^2.0.0",
     "@segment/eslint-config": "^3.1.1",
     "browserify": "^13.0.0",
     "browserify-istanbul": "^2.0.0",
+    "codecov": "^3.5.0",
+    "commitizen": "^3.1.1",
+    "commitlint-circle": "^1.0.0",
+    "cz-conventional-changelog": "^2.1.0",
     "eslint": "^2.9.0",
     "eslint-plugin-mocha": "^2.2.0",
     "eslint-plugin-require-path-exists": "^1.1.5",
@@ -61,10 +70,30 @@
     "karma-spec-reporter": "0.0.26",
     "lolex": "^2.7.1",
     "mocha": "^2.2.5",
+    "np": "^3.0.4",
     "npm-check": "^5.2.1",
     "phantomjs-prebuilt": "^2.1.7",
     "proclaim": "^3.4.1",
     "sinon": "^1.17.4",
+    "snyk": "^1.177.0",
     "watchify": "^3.7.0"
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
+  },
+  "lint-staged": {
+    "linters": {
+      "*.{js,json,md}": [
+        "prettier-eslint --write",
+        "git add"
+      ]
+    }
+  },
+  "config": {
+    "commitizen": {
+      "path": "cz-conventional-changelog"
+    }
   }
 }
