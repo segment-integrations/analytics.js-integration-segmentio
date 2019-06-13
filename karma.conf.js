@@ -1,13 +1,14 @@
 /* eslint-env node */
-/* eslint-disable no-restricted-globals */
 'use strict';
+
+// 10 minutes
+var TEST_TIMEOUT = 10 * 60 * 1000;
 
 module.exports = function(config) {
   config.set({
     files: [
       'test/**/*.test.js'
     ],
-
     browsers: ['PhantomJS'],
 
     middleware: ['server'],
@@ -47,40 +48,23 @@ module.exports = function(config) {
 
     frameworks: ['browserify', 'mocha'],
 
-    reporters: ['spec', 'coverage'],
+    reporters: ['spec'],
 
     preprocessors: {
       'test/**/*.js': 'browserify'
     },
 
+    browserNoActivityTimeout: TEST_TIMEOUT,
+
     client: {
       mocha: {
         grep: process.env.GREP,
-        reporter: 'html',
-        timeout: 10000
+        timeout: TEST_TIMEOUT
       }
     },
 
     browserify: {
-      debug: true,
-      transform: [
-        [
-          'browserify-istanbul',
-          {
-            instrumenterConfig: {
-              embedSource: true
-            }
-          }
-        ]
-      ]
-    },
-
-    coverageReporter: {
-      reporters: [
-        { type: 'text' },
-        { type: 'html' },
-        { type: 'json' }
-      ]
+      debug: true
     }
   });
 };
