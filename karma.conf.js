@@ -9,7 +9,10 @@ module.exports = function(config) {
     files: [
       'test/**/*.test.js'
     ],
+    
     browsers: ['PhantomJS'],
+
+    singleRun: true,
 
     middleware: ['server'],
 
