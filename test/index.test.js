@@ -505,6 +505,27 @@ describe('Segment.io', function() {
             analytics.stub(segment, 'enqueue');
           });
 
+          it('identify should not ultimately call getCachedCrossDomainId if crossDomainAnalytics is not enabled', function() {
+            var wasCalled = false;
+            var oldCrossDomainCheck = segment.isCrossDomainAnalyticsEnabled;
+            segment.isCrossDomainAnalyticsEnabled = function() {
+              return false;
+            };
+            var oldGetCrossDomainId = segment.getCachedCrossDomainId;
+            segment.getCachedCrossDomainId = function() {
+              wasCalled = true;
+              return '1234';
+            };
+            
+            var obj = {};
+            segment.normalize(obj);
+            
+            segment.isCrossDomainAnalyticsEnabled = oldCrossDomainCheck;
+            segment.getCachedCrossDomainId = oldGetCrossDomainId;
+            
+            analytics.assert(wasCalled === false, 'getCachedCrossDomainId is being called with crossDomainAnalyticsDisabled!');
+          });
+
           it('should enqueue an id and traits', function() {
             analytics.identify('id', { trait: true }, { opt: true });
             var args = segment.enqueue.args[0];
