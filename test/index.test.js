@@ -505,6 +505,14 @@ describe('Segment.io', function() {
             analytics.stub(segment, 'enqueue');
           });
 
+          it('identify should not ultimately call getCachedCrossDomainId if crossDomainAnalytics is not enabled', function() {
+            segment.options.crossDomainIdServers = [];
+            var getCachedCrossDomainIdSpy = sinon.spy(segment, 'getCachedCrossDomainId');
+            segment.normalize({});
+            sinon.assert.notCalled(getCachedCrossDomainIdSpy);
+            segment.getCachedCrossDomainId.restore();
+          });
+
           it('should enqueue an id and traits', function() {
             analytics.identify('id', { trait: true }, { opt: true });
             var args = segment.enqueue.args[0];
