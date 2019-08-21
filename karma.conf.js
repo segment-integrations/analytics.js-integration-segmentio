@@ -4,13 +4,15 @@
 // 10 minutes
 var TEST_TIMEOUT = 10 * 60 * 1000;
 
+process.env.CHROME_BIN = require('puppeteer').executablePath();
+
 module.exports = function(config) {
   config.set({
     files: [
       'test/**/*.test.js'
     ],
     
-    browsers: ['PhantomJS'],
+    browsers: ['ChromeHeadless'],
 
     singleRun: true,
 
