@@ -1391,7 +1391,12 @@ describe('Segment.io', function() {
       if (send.type !== 'xhr') return done();
 
       Segment.sendJsonWithTimeout(url, [1, 2, 3], headers, 1, function(err) {
-        assert(err.type === 'timeout');
+        if (err !== null) {
+          assert(err.type === 'timeout');
+        } else {
+          // Fail instead of hang if test didn't timeout properly
+          assert(false);
+        }
         done();
       });
     });
