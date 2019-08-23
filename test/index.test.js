@@ -1387,6 +1387,15 @@ describe('Segment.io', function() {
 
     var headers = { 'Content-Type': 'application/json' };
 
+    it('should timeout', function(done) {
+      if (send.type !== 'xhr') return done();
+
+      Segment.sendJsonWithTimeout(url, [1, 2, 3], headers, 1, function(err) {
+        assert(err.type === 'timeout');
+        done();
+      });
+    });
+
     it('should work', function(done) {
       if (send.type !== 'xhr') return done();
 
@@ -1394,15 +1403,6 @@ describe('Segment.io', function() {
         if (err) return done(new Error(err.message));
         var res = JSON.parse(req.responseText);
         assert(res === true);
-        done();
-      });
-    });
-
-    it('should timeout', function(done) {
-      if (send.type !== 'xhr') return done();
-
-      Segment.sendJsonWithTimeout(url, [1, 2, 3], headers, 1, function(err) {
-        assert(err.type === 'timeout');
         done();
       });
     });
