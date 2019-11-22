@@ -209,7 +209,7 @@ describe('Segment.io', function() {
 
       it('should add .campaign', function() {
         Segment.global = { navigator: {}, location: {} };
-        Segment.global.location.search = '?utm_source=source&utm_medium=medium&utm_term=term&utm_content=content&utm_campaign=name';
+        Segment.global.location.search = '?utm_source=source&utm_medium=medium&utm_term=term&utm_content=content&utm_campaign=name&utm_test=val';
         Segment.global.location.hostname = 'localhost';
         segment.normalize(object);
         analytics.assert(object);
@@ -220,6 +220,7 @@ describe('Segment.io', function() {
         analytics.assert(object.context.campaign.term === 'term');
         analytics.assert(object.context.campaign.content === 'content');
         analytics.assert(object.context.campaign.name === 'name');
+        analytics.assert(object.context.campaign.test === 'val');
         Segment.global = window;
       });
 
@@ -247,6 +248,25 @@ describe('Segment.io', function() {
         analytics.assert(object.context.campaign.term === 'overrideTerm');
         analytics.assert(object.context.campaign.content === 'overrideContent');
         analytics.assert(object.context.campaign.name === 'overrideName');
+        Segment.global = window;
+      });
+
+      it('should add only specced fields to .campaign if strictmode is enabled', function() {
+        segment.options.strictUTM = true;
+        Segment.global = { navigator: {}, location: {} };
+        Segment.global.location.search = '?utm_source=source&utm_medium=medium&utm_term=term&utm_content=content&utm_campaign=name&utm_test=test&utm_fake=fake';
+        Segment.global.location.hostname = 'localhost';
+        segment.normalize(object);
+        analytics.assert(object);
+        analytics.assert(object.context);
+        analytics.assert(object.context.campaign);
+        analytics.assert(object.context.campaign.source === 'source');
+        analytics.assert(object.context.campaign.medium === 'medium');
+        analytics.assert(object.context.campaign.term === 'term');
+        analytics.assert(object.context.campaign.content === 'content');
+        analytics.assert(object.context.campaign.name === 'name');
+        analytics.assert(object.context.campaign.test === undefined);
+        analytics.assert(object.context.campaign.fake === undefined);
         Segment.global = window;
       });
 
